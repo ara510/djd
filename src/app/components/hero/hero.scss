@@ -73,6 +73,18 @@
     }
   }
 
+  // ─── Watermark logo ─────────────────────────────────────────────────────────
+  &__watermark {
+    position: absolute;
+    inset-inline-end: -5%;
+    inset-block-end: 5%;
+    width: clamp(300px, 40vw, 550px);
+    opacity: 0.08;
+    pointer-events: none;
+    z-index: 0;
+    user-select: none;
+  }
+
   // ─── Scroll line ────────────────────────────────────────────────────────────
   &__scroll-hint {
     position: absolute;

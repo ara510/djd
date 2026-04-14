@@ -5,6 +5,7 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     // Navbar
     'nav.about':    'À propos',
     'nav.services': 'Services',
+    'nav.izao':     'Initiative',
     'nav.approach': 'Approche',
     'nav.contact':  'Contact',
 
@@ -42,6 +43,15 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'services.6.title': 'Conseil & Accompagnement',
     'services.6.desc':  'Coaching en communication pour leaders et dirigeants. Architecture de réputation personnelle et institutionnelle.',
 
+    // Izao Akia a
+    'izao.label':         'Initiative',
+    'izao.title':         'Izao Akia a…',
+    'izao.body1':         'En partenariat avec l\'Ordre des Journalistes de Madagascar, Dujardin Delacour & Cie lance "Izao Akia a…" — une initiative pour inspirer la prochaine génération de femmes et de filles à travers des messages d\'encouragement et de conseils.',
+    'izao.body2':         'Des voix du monde entier sont invitées à partager une pensée, un conseil ou une courte vidéo compilée dans un album spécial "Voix pour demain", diffusé sur les plateformes de l\'OJM, LinkedIn et les réseaux de Karine Rabefaritra.',
+    'izao.partners':      'Partenaires',
+    'izao.channels':      'Diffusion',
+    'izao.channels.body': 'Page Facebook de l\'OJM (album "Voix pour demain") · LinkedIn Dujardin Delacour & Cie · Plateformes de Karine Rabefaritra',
+
     // Approach
     'approach.label': 'Notre approche',
     'approach.title': 'Ce qui nous distingue',
@@ -77,6 +87,7 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     // Navbar
     'nav.about':    'About',
     'nav.services': 'Services',
+    'nav.izao':     'Initiative',
     'nav.approach': 'Approach',
     'nav.contact':  'Contact',
 
@@ -113,6 +124,15 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'services.5.desc':  'Creating creative communication materials: visuals, brochures, digital content and materials for decision-makers.',
     'services.6.title': 'Consulting & Coaching',
     'services.6.desc':  'Communication coaching for leaders and executives. Personal and institutional reputation architecture.',
+
+    // Izao Akia a
+    'izao.label':         'Initiative',
+    'izao.title':         'Izao Akia a…',
+    'izao.body1':         'In partnership with the Ordre des Journalistes de Madagascar, Dujardin Delacour & Cie launches "Izao Akia a…" — an initiative to inspire the next generation of women and girls through messages of encouragement and advice.',
+    'izao.body2':         'Voices from around the world are invited to share a thought, advice, or a short video compiled in a special album "Voix pour demain", broadcast on OJM platforms, LinkedIn and Karine Rabefaritra\'s networks.',
+    'izao.partners':      'Partners',
+    'izao.channels':      'Distribution',
+    'izao.channels.body': 'OJM Facebook page (album "Voix pour demain") · Dujardin Delacour & Cie LinkedIn · Karine Rabefaritra\'s platforms',
 
     // Approach
     'approach.label': 'Our approach',

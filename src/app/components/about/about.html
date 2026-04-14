@@ -1,5 +1,7 @@
 <section id="about">
   <div class="container about">
+
+    <!-- Grille principale : texte + portrait Karine -->
     <div class="about__grid">
 
       <div class="about__text">
@@ -11,19 +13,42 @@
         </h2>
         <p class="about__body reveal reveal-delay-3" #revealEl>{{ lang.t('about.body1') }}</p>
         <p class="about__body reveal reveal-delay-4" #revealEl>{{ lang.t('about.body2') }}</p>
+
+        <!-- Stats sous le texte -->
+        <div class="about__stats">
+          <div
+            *ngFor="let stat of stats; let i = index"
+            class="about__stat reveal"
+            [class]="'reveal-delay-' + (i + 2)"
+            #revealEl>
+            <span class="about__stat-value display">{{ stat.value }}</span>
+            <span class="about__stat-label">{{ lang.t(stat.key) }}</span>
+          </div>
+        </div>
       </div>
 
-      <div class="about__stats">
-        <div
-          *ngFor="let stat of stats; let i = index"
-          class="about__stat reveal"
-          [class]="'reveal-delay-' + (i + 2)"
-          #revealEl>
-          <span class="about__stat-value display">{{ stat.value }}</span>
-          <span class="about__stat-label">{{ lang.t(stat.key) }}</span>
+      <!-- Portrait Karine Rabefaritra -->
+      <div class="about__portrait reveal reveal-delay-2" #revealEl>
+        <img src="karine.jpg" alt="Karine Rabefaritra, co-fondatrice" class="about__portrait-img" />
+        <div class="about__portrait-caption">
+          <span class="about__portrait-name">Karine Rabefaritra</span>
+          <span class="about__portrait-role">Co-fondatrice &amp; Strategic Lead</span>
         </div>
       </div>
 
     </div>
+
+    <!-- Galerie événements -->
+    <div class="about__gallery">
+      <div class="about__gallery-item reveal reveal-delay-1" #revealEl>
+        <img src="about-1.jpg" alt="Colloque National pour le Développement de l'Élevage" class="about__gallery-img" />
+        <p class="about__gallery-caption">Colloque National · Antananarivo</p>
+      </div>
+      <div class="about__gallery-item reveal reveal-delay-2" #revealEl>
+        <img src="about-2.jpg" alt="Événement de communication terrain" class="about__gallery-img" />
+        <p class="about__gallery-caption">Événement terrain · Madagascar</p>
+      </div>
+    </div>
+
   </div>
 </section>

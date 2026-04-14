@@ -1,5 +1,21 @@
 .approach-section {
   background: #EFECE5;
+  position: relative;
+
+  // ─── Paysage Madagascar en fond partiel ────────────────────────────────────
+  &::before {
+    content: '';
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-end: 0;
+    width: 100%;
+    height: 100%;
+    background: url('/services-1.jpg') center/cover no-repeat;
+    opacity: 0.12;
+    pointer-events: none;
+
+    @media (max-width: 768px) { display: none; }
+  }
 
   &__header {
     max-width: 640px;

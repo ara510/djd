@@ -1,0 +1,116 @@
+.izao-section {
+  background: var(--color-surface);
+
+  &__inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6rem;
+    align-items: center;
+
+    @media (max-width: 900px) {
+      grid-template-columns: 1fr;
+      gap: 3rem;
+    }
+  }
+
+  // ─── Image ────────────────────────────────────────────────────────────────
+  &__visual {
+    position: relative;
+  }
+
+  &__img {
+    width: 100%;
+    height: 520px;
+    object-fit: cover;
+    display: block;
+
+    @media (max-width: 900px) { height: 320px; }
+  }
+
+  &__img-tag {
+    position: absolute;
+    inset-block-end: 1.5rem;
+    inset-inline-start: 1.5rem;
+    background: var(--color-ink);
+    color: var(--color-bg);
+    padding: 0.4rem 1rem;
+
+    span {
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+  }
+
+  // ─── Content ──────────────────────────────────────────────────────────────
+  &__title {
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    margin-block-end: 1.5rem;
+  }
+
+  &__body {
+    color: var(--color-ink-muted);
+    font-size: 0.95rem;
+    line-height: 1.85;
+    margin-block-end: 1.2rem;
+  }
+
+  // ─── Partenaires ──────────────────────────────────────────────────────────
+  &__partners {
+    margin-block-start: 2rem;
+    margin-block-end: 1.5rem;
+  }
+
+  &__partners-label,
+  &__channels-label {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin-block-end: 0.75rem;
+  }
+
+  &__partners-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  &__partner-tag {
+    font-size: 0.78rem;
+    color: var(--color-ink);
+    border: 1px solid var(--color-border);
+    padding: 0.3rem 0.9rem;
+  }
+
+  // ─── Canaux ───────────────────────────────────────────────────────────────
+  &__links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+}
+
+.izao-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+  transition: color 0.2s ease;
+
+  &__icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: var(--color-accent);
+    transition: color 0.2s ease;
+  }
+
+  &:hover {
+    color: var(--color-accent);
+  }
+}

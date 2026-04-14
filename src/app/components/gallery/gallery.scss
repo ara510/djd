@@ -1,0 +1,393 @@
+// ─── Overlay principal ────────────────────────────────────────────────────────
+.glx {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: none;
+
+  &--open { pointer-events: all; }
+
+  // ─── Backdrop ──────────────────────────────────────────────────────────────
+  &__backdrop {
+    position: absolute;
+    inset: 0;
+    background: #0A0907;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+
+    .glx--open & { opacity: 0.97; }
+  }
+
+  // ─── Stage (tout le contenu sauf backdrop) ─────────────────────────────────
+  &__stage {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: scale(0.97);
+    transition: opacity 0.5s ease 0.05s, transform 0.5s var(--ease-out) 0.05s;
+
+    .glx--open & {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  // ─── Barre de progression ──────────────────────────────────────────────────
+  &__progress {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline: 0;
+    height: 2px;
+    background: rgba(255,255,255,0.08);
+    z-index: 10;
+  }
+
+  &__progress-bar {
+    height: 100%;
+    background: var(--color-accent-lt);
+    transition: width 50ms linear;
+    box-shadow: 0 0 8px rgba(196,168,130,0.6);
+  }
+
+  // ─── Header ────────────────────────────────────────────────────────────────
+  &__header {
+    position: absolute;
+    inset-block-start: 1.5rem;
+    inset-inline: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 10;
+  }
+
+  &__counter {
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.05em;
+
+    em {
+      font-style: normal;
+      font-size: 1.4rem;
+      color: rgba(255,255,255,0.85);
+      font-weight: 300;
+    }
+  }
+
+  &__counter-sep {
+    margin-inline: 0.3rem;
+    color: rgba(255,255,255,0.2);
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  &__action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 2px;
+    color: rgba(255,255,255,0.55);
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+
+    &:hover {
+      background: rgba(255,255,255,0.12);
+      border-color: rgba(255,255,255,0.25);
+      color: #fff;
+    }
+
+    &--close:hover {
+      background: rgba(139,107,61,0.3);
+      border-color: var(--color-accent);
+      color: var(--color-accent-lt);
+    }
+  }
+
+  // ─── Frame image ───────────────────────────────────────────────────────────
+  &__frame {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  // ─── Slides (crossfade) ────────────────────────────────────────────────────
+  &__slide {
+    position: absolute;
+    inset: 0;
+
+    &--prev {
+      z-index: 1;
+      opacity: 1;
+      &.glx__slide--exit {
+        animation: glxFadeOut 0.55s var(--ease-out) forwards;
+      }
+    }
+
+    &--cur {
+      z-index: 2;
+      opacity: 0;
+      &.glx__slide--enter {
+        animation: glxFadeIn 0.55s var(--ease-out) forwards;
+      }
+      // État stable (pas en transition)
+      .glx--open &:not(.glx__slide--enter) {
+        opacity: 1;
+      }
+    }
+  }
+
+  // ─── Image avec Ken Burns ──────────────────────────────────────────────────
+  &__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+
+    &.kb-1 { animation: kb1 12s ease-in-out infinite alternate; }
+    &.kb-2 { animation: kb2 14s ease-in-out infinite alternate; }
+    &.kb-3 { animation: kb3 16s ease-in-out infinite alternate; }
+    &.kb-4 { animation: kb4 13s ease-in-out infinite alternate; }
+  }
+
+  // ─── Hint clic ─────────────────────────────────────────────────────────────
+  &__click-hint {
+    position: absolute;
+    inset-block-end: 40%;
+    inset-inline-end: 2.5rem;
+    font-family: var(--font-body);
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.2);
+    writing-mode: vertical-rl;
+    z-index: 5;
+    pointer-events: none;
+    animation: hintPulse 3s ease-in-out infinite;
+  }
+
+  // ─── Caption ───────────────────────────────────────────────────────────────
+  &__caption {
+    position: absolute;
+    inset-block-end: 0;
+    inset-inline: 0;
+    z-index: 10;
+    padding: 6rem 2.5rem 7.5rem;
+    background: linear-gradient(to top, rgba(5,4,3,0.88) 0%, rgba(5,4,3,0.4) 60%, transparent 100%);
+    pointer-events: none;
+  }
+
+  &__caption-line {
+    width: 2rem;
+    height: 1px;
+    background: var(--color-accent-lt);
+    margin-block-end: 1rem;
+    opacity: 0.7;
+  }
+
+  &__caption-text {
+    font-family: var(--font-display);
+    font-size: clamp(1rem, 2vw, 1.4rem);
+    font-style: italic;
+    color: rgba(255,255,255,0.82);
+    line-height: 1.5;
+    letter-spacing: 0.01em;
+    animation: captionSlide 0.5s var(--ease-out) both;
+  }
+
+  // ─── Flèches ───────────────────────────────────────────────────────────────
+  &__arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.6);
+    cursor: pointer;
+    border-radius: 2px;
+    transition: background 0.25s, border-color 0.25s, color 0.25s, transform 0.25s;
+
+    &--prev {
+      inset-inline-start: 1.5rem;
+      &:hover { transform: translateY(-50%) translateX(-3px); }
+    }
+    &--next {
+      inset-inline-end: 1.5rem;
+      &:hover { transform: translateY(-50%) translateX(3px); }
+    }
+
+    &:hover {
+      background: rgba(139,107,61,0.25);
+      border-color: var(--color-accent);
+      color: var(--color-accent-lt);
+    }
+  }
+
+  // ─── Film strip ────────────────────────────────────────────────────────────
+  &__strip {
+    position: absolute;
+    inset-block-end: 1.5rem;
+    inset-inline: 50%;
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: 90vw;
+    display: flex;
+    gap: 4px;
+    z-index: 10;
+    overflow-x: auto;
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+  }
+
+  &__strip-item {
+    position: relative;
+    flex-shrink: 0;
+    width: 56px;
+    height: 38px;
+    overflow: hidden;
+    border: 1.5px solid transparent;
+    border-radius: 1px;
+    cursor: pointer;
+    padding: 0;
+    background: none;
+    transition: border-color 0.2s, transform 0.2s;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      filter: grayscale(40%);
+      transition: filter 0.3s;
+    }
+
+    &.active {
+      border-color: var(--color-accent-lt);
+      transform: translateY(-3px);
+      img { filter: none; }
+    }
+
+    &:not(.active):hover {
+      border-color: rgba(255,255,255,0.3);
+      img { filter: grayscale(0); }
+    }
+  }
+
+  &__strip-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    transition: background 0.2s;
+
+    &.active { background: transparent; }
+  }
+
+  // ─── Vue grille ────────────────────────────────────────────────────────────
+  &__grid-view {
+    position: relative;
+    z-index: 5;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3px;
+    padding: 4.5rem 1.5rem 1.5rem;
+    overflow-y: auto;
+
+    @media (max-width: 600px) { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  &__grid-thumb {
+    position: relative;
+    aspect-ratio: 4/3;
+    overflow: hidden;
+    border: 2px solid transparent;
+    cursor: pointer;
+    padding: 0;
+    background: none;
+    border-radius: 1px;
+    transition: border-color 0.2s, transform 0.25s;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      filter: grayscale(20%);
+      transition: filter 0.4s, transform 0.4s;
+    }
+
+    &:hover img { filter: none; transform: scale(1.04); }
+
+    &.active {
+      border-color: var(--color-accent-lt);
+      img { filter: none; }
+    }
+  }
+
+  &__grid-num {
+    position: absolute;
+    inset-block-end: 0.5rem;
+    inset-inline-end: 0.6rem;
+    font-family: var(--font-display);
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.5);
+    pointer-events: none;
+  }
+}
+
+// ─── Animations ───────────────────────────────────────────────────────────────
+@keyframes glxFadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@keyframes glxFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+// Ken Burns — 4 trajectoires différentes
+@keyframes kb1 {
+  from { transform: scale(1)    translate(0, 0); }
+  to   { transform: scale(1.08) translate(-1.5%, -1%); }
+}
+@keyframes kb2 {
+  from { transform: scale(1.06) translate(1%, 0.5%); }
+  to   { transform: scale(1)    translate(-0.5%, -1%); }
+}
+@keyframes kb3 {
+  from { transform: scale(1)    translate(-1%, 0.5%); }
+  to   { transform: scale(1.07) translate(1%, -0.5%); }
+}
+@keyframes kb4 {
+  from { transform: scale(1.05) translate(0.5%, -0.5%); }
+  to   { transform: scale(1)    translate(-1%, 0.5%); }
+}
+
+@keyframes captionSlide {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes hintPulse {
+  0%, 100% { opacity: 0.15; }
+  50%       { opacity: 0.35; }
+}

@@ -1,29 +1,30 @@
 import { Component, HostListener, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslationService } from '../../services/translation.service';
+import { GalleryService }     from '../../services/gallery.service';
+import { GalleryComponent }   from '../gallery/gallery';
 
 interface NavLink { target: string; key: string; }
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, GalleryComponent],
   templateUrl: './navbar.html',
   styleUrl: './navbar.scss',
 })
 export class NavbarComponent implements OnInit {
-  lang = inject(TranslationService);
+  lang    = inject(TranslationService);
+  gallery = inject(GalleryService);
 
   scrolled      = signal(false);
-  hidden        = signal(false);
   menuOpen      = signal(false);
   activeSection = signal('');
-
-  private lastScrollY = 0;
 
   links: NavLink[] = [
     { key: 'nav.about',    target: 'about'    },
     { key: 'nav.services', target: 'services' },
+    { key: 'nav.izao',     target: 'izao'     },
     { key: 'nav.approach', target: 'approach' },
     { key: 'nav.contact',  target: 'contact'  },
   ];
@@ -45,10 +46,7 @@ export class NavbarComponent implements OnInit {
 
   @HostListener('window:scroll')
   onScroll() {
-    const current = window.scrollY;
-    this.scrolled.set(current > 60);
-    this.hidden.set(current > this.lastScrollY && current > 80);
-    this.lastScrollY = current;
+    this.scrolled.set(window.scrollY > 60);
   }
 
   scrollTo(id: string) {
