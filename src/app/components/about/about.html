@@ -1,0 +1,29 @@
+<section id="about">
+  <div class="container about">
+    <div class="about__grid">
+
+      <div class="about__text">
+        <p class="label reveal" #revealEl>{{ lang.t('about.label') }}</p>
+        <span class="rule reveal reveal-delay-1" #revealEl></span>
+        <h2 class="display about__heading reveal reveal-delay-2" #revealEl>
+          {{ lang.t('about.h2.1') }}<br>
+          <em>{{ lang.t('about.h2.2') }}</em>
+        </h2>
+        <p class="about__body reveal reveal-delay-3" #revealEl>{{ lang.t('about.body1') }}</p>
+        <p class="about__body reveal reveal-delay-4" #revealEl>{{ lang.t('about.body2') }}</p>
+      </div>
+
+      <div class="about__stats">
+        <div
+          *ngFor="let stat of stats; let i = index"
+          class="about__stat reveal"
+          [class]="'reveal-delay-' + (i + 2)"
+          #revealEl>
+          <span class="about__stat-value display">{{ stat.value }}</span>
+          <span class="about__stat-label">{{ lang.t(stat.key) }}</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>

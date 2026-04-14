@@ -1,0 +1,79 @@
+.approach-section {
+  background: #EFECE5;
+
+  &__header {
+    max-width: 640px;
+    margin-block-end: 4.5rem;
+  }
+
+  &__title {
+    font-size: clamp(2rem, 4vw, 3rem);
+  }
+
+  &__intro {
+    color: var(--color-ink-muted);
+    font-size: 1rem;
+    line-height: 1.85;
+    margin-block-start: 1.2rem;
+  }
+
+  // ─── Pillars grid ─────────────────────────────────────────────────────────
+  &__pillars {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2.5rem;
+    margin-block-end: 5rem;
+
+    @media (max-width: 1024px) { grid-template-columns: repeat(2, 1fr); }
+    @media (max-width: 540px)  { grid-template-columns: 1fr; }
+  }
+
+  // ─── Quote ────────────────────────────────────────────────────────────────
+  &__quote {
+    border-left: 2px solid var(--color-accent);
+    padding-inline-start: 2rem;
+    max-width: 700px;
+
+    p {
+      font-family: var(--font-display);
+      font-size: clamp(1.2rem, 2.2vw, 1.55rem);
+      font-style: italic;
+      color: var(--color-ink);
+      line-height: 1.6;
+      margin-block-end: 1rem;
+    }
+
+    cite {
+      font-family: var(--font-body);
+      font-size: 0.72rem;
+      font-style: normal;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--color-accent);
+    }
+  }
+}
+
+.pillar {
+  &__icon {
+    display: block;
+    font-size: 1.4rem;
+    color: var(--color-accent);
+    margin-block-end: 1.2rem;
+    line-height: 1;
+  }
+
+  &__title {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 500;
+    margin-block-end: 0.8rem;
+    color: var(--color-ink);
+  }
+
+  &__body {
+    font-size: 0.9rem;
+    color: var(--color-ink-muted);
+    line-height: 1.8;
+  }
+}

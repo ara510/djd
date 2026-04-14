@@ -1,0 +1,61 @@
+<header class="navbar" [class.scrolled]="scrolled()" [class.hidden]="hidden()">
+  <div class="container navbar__inner">
+
+    <!-- Logo -->
+    <a class="navbar__logo" (click)="scrollTo('hero')">
+      <img src="DJD.png" alt="Dujardin Delacour" class="navbar__logo-img" />
+    </a>
+
+    <!-- Desktop nav -->
+    <nav class="navbar__links" aria-label="Navigation principale">
+      <button
+        *ngFor="let link of links"
+        class="navbar__link"
+        [class.active]="activeSection() === link.target"
+        (click)="scrollTo(link.target)"
+        type="button">
+        {{ lang.t(link.key) }}
+      </button>
+
+      <!-- Séparateur -->
+      <span class="navbar__sep" aria-hidden="true"></span>
+
+      <!-- Switcher FR / EN -->
+      <div class="navbar__lang">
+        <button
+          class="navbar__lang-btn"
+          [class.active]="lang.lang() === 'fr'"
+          (click)="lang.lang.set('fr')"
+          type="button">FR</button>
+        <span class="navbar__lang-div">|</span>
+        <button
+          class="navbar__lang-btn"
+          [class.active]="lang.lang() === 'en'"
+          (click)="lang.lang.set('en')"
+          type="button">EN</button>
+      </div>
+    </nav>
+
+    <!-- Mobile burger -->
+    <button class="navbar__burger" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()" aria-label="Menu">
+      <span class="burger-bar" [class.open]="menuOpen()"></span>
+    </button>
+
+  </div>
+
+  <!-- Mobile drawer -->
+  <nav class="navbar__drawer" [class.open]="menuOpen()" aria-label="Navigation mobile">
+    <button
+      *ngFor="let link of links"
+      class="navbar__drawer-link"
+      (click)="scrollTo(link.target)"
+      type="button">
+      {{ lang.t(link.key) }}
+    </button>
+    <div class="navbar__drawer-lang">
+      <button class="navbar__lang-btn" [class.active]="lang.lang() === 'fr'" (click)="lang.lang.set('fr')" type="button">FR</button>
+      <span class="navbar__lang-div">|</span>
+      <button class="navbar__lang-btn" [class.active]="lang.lang() === 'en'" (click)="lang.lang.set('en')" type="button">EN</button>
+    </div>
+  </nav>
+</header>

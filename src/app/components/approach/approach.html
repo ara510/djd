@@ -1,0 +1,33 @@
+<section id="approach" class="approach-section">
+  <div class="container">
+
+    <header class="approach-section__header">
+      <p class="label reveal" #revealEl>{{ lang.t('approach.label') }}</p>
+      <span class="rule reveal reveal-delay-1" #revealEl></span>
+      <h2 class="display approach-section__title reveal reveal-delay-2" #revealEl>
+        {{ lang.t('approach.title') }}
+      </h2>
+      <p class="approach-section__intro reveal reveal-delay-3" #revealEl>
+        {{ lang.t('approach.intro') }}
+      </p>
+    </header>
+
+    <div class="approach-section__pillars">
+      <div
+        *ngFor="let p of pillars; let i = index"
+        class="pillar reveal"
+        [class]="'reveal-delay-' + (i + 1)"
+        #revealEl>
+        <span class="pillar__icon" aria-hidden="true">{{ p.icon }}</span>
+        <h3 class="pillar__title">{{ lang.t(p.titleKey) }}</h3>
+        <p class="pillar__body">{{ lang.t(p.bodyKey) }}</p>
+      </div>
+    </div>
+
+    <blockquote class="approach-section__quote reveal reveal-delay-2" #revealEl>
+      <p>{{ lang.t('approach.quote') }}</p>
+      <cite>Dujardin Delacour &amp; Cie</cite>
+    </blockquote>
+
+  </div>
+</section>

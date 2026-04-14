@@ -1,0 +1,103 @@
+.hero {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+
+  &__canvas {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+&__content {
+    position: relative;
+    z-index: 1;
+    padding-block: 7rem 4rem;
+    max-width: 680px;
+  }
+
+  &__eyebrow {
+    margin-block-end: 2rem;
+    animation: fadeUp 0.8s var(--ease-out) 0.2s both;
+  }
+
+  &__title {
+    font-size: clamp(3.5rem, 8vw, 7rem);
+    color: var(--color-ink);
+    animation: fadeUp 0.8s var(--ease-out) 0.35s both;
+
+    em {
+      font-style: italic;
+      color: var(--color-accent);
+    }
+  }
+
+  .rule {
+    animation: fadeUp 0.8s var(--ease-out) 0.5s both;
+  }
+
+  &__sub {
+    font-size: clamp(1rem, 1.8vw, 1.15rem);
+    color: var(--color-ink-muted);
+    line-height: 1.8;
+    animation: fadeUp 0.8s var(--ease-out) 0.6s both;
+  }
+
+  &__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-block-start: 2.5rem;
+    padding: 0.85rem 2rem;
+    background: transparent;
+    border: 1px solid var(--color-accent);
+    color: var(--color-accent);
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.3s ease, color 0.3s ease;
+    animation: fadeUp 0.8s var(--ease-out) 0.75s both;
+
+    svg { transition: transform 0.3s ease; }
+
+    &:hover {
+      background: var(--color-accent);
+      color: var(--color-bg);
+
+      svg { transform: translateY(3px); }
+    }
+  }
+
+  // ─── Scroll line ────────────────────────────────────────────────────────────
+  &__scroll-hint {
+    position: absolute;
+    inset-block-end: 2.5rem;
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+    animation: fadeUp 1s var(--ease-out) 1.2s both;
+  }
+
+  &__scroll-line {
+    display: block;
+    width: 1px;
+    height: 60px;
+    background: linear-gradient(to bottom, var(--color-accent), transparent);
+    animation: scrollPulse 2s ease-in-out infinite;
+  }
+}
+
+// ─── Keyframes ────────────────────────────────────────────────────────────────
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes scrollPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}

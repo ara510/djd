@@ -1,0 +1,25 @@
+<section id="services" class="services-section">
+  <div class="container">
+
+    <header class="services-section__header">
+      <p class="label reveal" #revealEl>{{ lang.t('services.label') }}</p>
+      <span class="rule reveal reveal-delay-1" #revealEl></span>
+      <h2 class="display services-section__title reveal reveal-delay-2" #revealEl>
+        {{ lang.t('services.title') }}
+      </h2>
+    </header>
+
+    <div class="services-section__grid">
+      <article
+        *ngFor="let svc of services; let i = index"
+        class="service-card reveal"
+        [class]="'reveal-delay-' + ((i % 3) + 1)"
+        #revealEl>
+        <span class="service-card__number">{{ svc.number }}</span>
+        <h3 class="service-card__title">{{ lang.t(svc.titleKey) }}</h3>
+        <p class="service-card__desc">{{ lang.t(svc.descKey) }}</p>
+      </article>
+    </div>
+
+  </div>
+</section>

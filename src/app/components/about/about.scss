@@ -1,0 +1,82 @@
+.about {
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6rem;
+    align-items: start;
+
+    @media (max-width: 900px) {
+      grid-template-columns: 1fr;
+      gap: 4rem;
+    }
+  }
+
+  &__heading {
+    font-size: clamp(2.2rem, 4vw, 3.5rem);
+    margin-block-end: 1.5rem;
+
+    em {
+      font-style: italic;
+      color: var(--color-accent);
+    }
+  }
+
+  &__body {
+    color: var(--color-ink-muted);
+    margin-block-end: 1.2rem;
+    font-size: 1rem;
+    line-height: 1.85;
+  }
+
+  // ─── Stats ──────────────────────────────────────────────────────────────────
+  &__stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding-block-start: 4.5rem;
+
+    @media (max-width: 900px) {
+      flex-direction: row;
+      gap: 2rem;
+      padding-block-start: 0;
+    }
+
+    @media (max-width: 480px) {
+      flex-direction: column;
+    }
+  }
+
+  &__stat {
+    padding-block: 2rem;
+    border-top: 1px solid var(--color-border);
+
+    &:last-child { border-bottom: 1px solid var(--color-border); }
+
+    @media (max-width: 900px) {
+      border: none;
+      border-left: 1px solid var(--color-border);
+      padding-block: 0;
+      padding-inline-start: 1.5rem;
+      flex: 1;
+
+      &:last-child { border-bottom: none; }
+    }
+  }
+
+  &__stat-value {
+    display: block;
+    font-size: clamp(2.5rem, 5vw, 3.5rem);
+    color: var(--color-accent);
+    line-height: 1;
+  }
+
+  &__stat-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+    margin-block-start: 0.4rem;
+  }
+}
