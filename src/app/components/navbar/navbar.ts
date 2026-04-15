@@ -1,8 +1,8 @@
 import { Component, HostListener, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslationService } from '../../services/translation.service';
-import { GalleryService }     from '../../services/gallery.service';
-import { GalleryComponent }   from '../gallery/gallery';
+import { GalleryService }   from '../../services/gallery.service';
+import { GalleryComponent } from '../gallery/gallery';
 
 interface NavLink { target: string; key: string; }
 

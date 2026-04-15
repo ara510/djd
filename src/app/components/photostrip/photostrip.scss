@@ -1,0 +1,136 @@
+.strip {
+  position: relative;
+  background: var(--color-bg);
+  overflow: hidden;
+  border-block: 1px solid var(--color-border);
+  user-select: none;
+
+  // ─── Fondu sur les bords ────────────────────────────────────────────────────
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    width: 120px;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  &::before {
+    inset-inline-start: 0;
+    background: linear-gradient(to right, var(--color-bg), transparent);
+  }
+
+  &::after {
+    inset-inline-end: 0;
+    background: linear-gradient(to left, var(--color-bg), transparent);
+  }
+
+  // ─── Piste défilante ────────────────────────────────────────────────────────
+  &__track {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    cursor: grab;
+    padding-block: 0;
+
+    &::-webkit-scrollbar { display: none; }
+    &:active { cursor: grabbing; }
+  }
+
+  // ─── Photo individuelle ─────────────────────────────────────────────────────
+  &__item {
+    flex-shrink: 0;
+    position: relative;
+    height: 280px;
+    width: auto;
+    overflow: hidden;
+    border: none;
+    padding: 0;
+    background: #e8e3da;
+    cursor: pointer;
+
+    @media (max-width: 768px) { height: 200px; }
+
+    img {
+      height: 100%;
+      width: auto;
+      display: block;
+      object-fit: cover;
+      transition: transform 0.5s var(--ease-out), filter 0.4s ease;
+      pointer-events: none;
+    }
+
+    &:hover img {
+      transform: scale(1.04);
+      filter: brightness(0.75);
+    }
+
+    &:hover .strip__item-overlay {
+      opacity: 1;
+    }
+  }
+
+  // ─── Overlay expand icon ────────────────────────────────────────────────────
+  &__item-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.9);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  // ─── Flèches ────────────────────────────────────────────────────────────────
+  &__arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    color: var(--color-ink);
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s, opacity 0.3s, box-shadow 0.2s;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+
+    &--prev { inset-inline-start: 1rem; }
+    &--next { inset-inline-end: 1rem; }
+
+    &:hover {
+      border-color: var(--color-accent);
+      color: var(--color-accent);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    }
+
+    &.hidden { opacity: 0; pointer-events: none; }
+  }
+
+  // ─── Label ──────────────────────────────────────────────────────────────────
+  &__label {
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: 2.5rem;
+    transform: translateY(-50%) rotate(-90deg) translateX(-50%);
+    transform-origin: center center;
+    font-family: var(--font-body);
+    font-size: 0.55rem;
+    font-weight: 500;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    opacity: 0.5;
+    pointer-events: none;
+    z-index: 3;
+  }
+}
