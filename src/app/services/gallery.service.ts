@@ -2,9 +2,11 @@ import { Injectable, signal } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class GalleryService {
-  isOpen = signal(false);
+  isOpen     = signal(false);
+  startIndex = signal(0);
 
-  open() {
+  open(index = 0) {
+    this.startIndex.set(index);
     this.isOpen.set(true);
     document.body.style.overflow = 'hidden';
   }

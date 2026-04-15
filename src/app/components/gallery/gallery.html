@@ -1,120 +1,55 @@
-<!-- ─── Lightbox overlay ──────────────────────────────────────────────────────── -->
-<div
-  class="glx"
-  [class.glx--open]="gallery.isOpen()"
-  [class.glx--grid]="showGrid()"
-  role="dialog"
-  aria-modal="true"
-  aria-label="Galerie photos">
+<div class="glx" [class.glx--open]="gallery.isOpen()" role="dialog" aria-modal="true">
 
-  <!-- Backdrop -->
   <div class="glx__backdrop" (click)="close()"></div>
 
-  <!-- ─── VUE GRILLE ──────────────────────────────────────────────────────── -->
-  <div class="glx__grid-view" *ngIf="showGrid()">
-    <button
-      *ngFor="let p of photos; let i = index"
-      class="glx__grid-thumb"
-      [class.active]="current() === i"
-      (click)="goTo(i); toggleGrid()"
-      type="button">
-      <img [src]="p.src" [alt]="caption(p)" />
-      <span class="glx__grid-num">{{ i + 1 }}</span>
-    </button>
-  </div>
+  <div class="glx__modal">
 
-  <!-- ─── VUE CARROUSEL ───────────────────────────────────────────────────── -->
-  <div class="glx__stage" *ngIf="!showGrid()"
-       (mouseenter)="pauseOnHover()"
-       (mouseleave)="resumeOnHover()">
-
-    <!-- Barre de progression autoplay -->
-    <div class="glx__progress">
-      <div class="glx__progress-bar" [style.width.%]="progress()"></div>
-    </div>
-
-    <!-- Header : compteur + actions -->
+    <!-- Header -->
     <div class="glx__header">
-      <span class="glx__counter">
-        <em>{{ current() + 1 }}</em><span class="glx__counter-sep">/</span>{{ total() }}
-      </span>
-
-      <div class="glx__actions">
-        <!-- Play / Pause -->
-        <button class="glx__action-btn" (click)="togglePlay()" [attr.aria-label]="isPlaying() ? 'Pause' : 'Lecture'" type="button">
-          <svg *ngIf="isPlaying()" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>
-          </svg>
-          <svg *ngIf="!isPlaying()" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <polygon points="5,3 19,12 5,21"/>
-          </svg>
-        </button>
-
-        <!-- Grille -->
-        <button class="glx__action-btn" (click)="toggleGrid()" aria-label="Vue grille" type="button">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
-          </svg>
-        </button>
-
-        <!-- Fermer -->
-        <button class="glx__action-btn glx__action-btn--close" (click)="close()" aria-label="Fermer" type="button">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      </div>
-    </div>
-
-    <!-- Zone image plein écran -->
-    <div class="glx__frame" (click)="next()">
-
-      <!-- Image précédente (sort) -->
-      <div class="glx__slide glx__slide--prev" [class.glx__slide--exit]="animating()">
-        <img [src]="photos[prevIdx()].src" [alt]="caption(photos[prevIdx()])" class="glx__img" [class]="photos[prevIdx()].kb" />
-      </div>
-
-      <!-- Image courante (entre) -->
-      <div class="glx__slide glx__slide--cur" [class.glx__slide--enter]="animating()">
-        <img [src]="photo().src" [alt]="caption(photo())" class="glx__img" [class]="photo().kb" />
-      </div>
-
-      <!-- Hint clic -->
-      <span class="glx__click-hint" aria-hidden="true">cliquer pour avancer →</span>
-    </div>
-
-    <!-- Caption cinématique -->
-    <div class="glx__caption">
-      <div class="glx__caption-line" aria-hidden="true"></div>
-      <p class="glx__caption-text">{{ caption(photo()) }}</p>
-    </div>
-
-    <!-- Flèches -->
-    <button class="glx__arrow glx__arrow--prev" (click)="prev(); $event.stopPropagation()" type="button" aria-label="Précédent">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <polyline points="15 18 9 12 15 6"/>
-      </svg>
-    </button>
-    <button class="glx__arrow glx__arrow--next" (click)="next(); $event.stopPropagation()" type="button" aria-label="Suivant">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <polyline points="9 18 15 12 9 6"/>
-      </svg>
-    </button>
-
-    <!-- Film strip -->
-    <div class="glx__strip">
-      <button
-        *ngFor="let p of photos; let i = index"
-        class="glx__strip-item"
-        [class.active]="current() === i"
-        (click)="goTo(i); $event.stopPropagation()"
-        type="button"
-        [attr.aria-label]="'Photo ' + (i + 1)">
-        <img [src]="p.src" [alt]="caption(p)" />
-        <span class="glx__strip-overlay" [class.active]="current() === i"></span>
+      <span class="glx__title">{{ lang.lang() === 'fr' ? 'Galerie' : 'Gallery' }}</span>
+      <span class="glx__count">{{ current() + 1 }} / {{ total() }}</span>
+      <button class="glx__close" (click)="close()" type="button" aria-label="Fermer">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
       </button>
     </div>
 
-  </div><!-- /stage -->
+    <!-- Carrousel horizontal -->
+    <div class="glx__carousel">
+
+      <!-- Flèche gauche -->
+      <button class="glx__arrow glx__arrow--prev" (click)="prev()" type="button" aria-label="Précédent">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+
+      <!-- Piste défilante -->
+      <div class="glx__track" #track>
+        <div
+          *ngFor="let p of photos; let i = index"
+          class="glx__slide"
+          [class.glx__slide--active]="current() === i"
+          (click)="goTo(i)">
+          <img [src]="p.src" [alt]="caption(p)" draggable="false" />
+        </div>
+      </div>
+
+      <!-- Flèche droite -->
+      <button class="glx__arrow glx__arrow--next" (click)="next()" type="button" aria-label="Suivant">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </button>
+
+    </div>
+
+    <!-- Caption -->
+    <div class="glx__caption">
+      <span class="glx__caption-rule"></span>
+      <p>{{ caption(photos[current()]) }}</p>
+    </div>
+
+  </div>
 </div>
