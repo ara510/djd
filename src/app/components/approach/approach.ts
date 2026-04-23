@@ -17,7 +17,6 @@ export class ApproachComponent implements OnInit {
     { icon: '◈', titleKey: 'approach.p1.title', bodyKey: 'approach.p1.body' },
     { icon: '◉', titleKey: 'approach.p2.title', bodyKey: 'approach.p2.body' },
     { icon: '◎', titleKey: 'approach.p3.title', bodyKey: 'approach.p3.body' },
-    { icon: '◇', titleKey: 'approach.p4.title', bodyKey: 'approach.p4.body' },
   ];
 
   ngOnInit(): void {

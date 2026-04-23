@@ -21,8 +21,10 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'about.label':   'À propos',
     'about.h2.1':    'Confiance locale,',
     'about.h2.2':    'portée internationale.',
-    'about.body1':   'Depuis 2009, Dujardin Delacour & Cie accompagne les organisations, institutions et leaders à Madagascar dans la construction et la gestion de leur image, de leur réputation et de leur intégration dans les communautés.',
-    'about.body2':   'Notre force réside dans la combinaison d\'une expertise en communication stratégique, d\'un solide réseau d\'influence et d\'une compréhension profonde des dynamiques locales et internationales.',
+    'about.body1':   'Depuis plus de 16 ans, Dujardin Delacour & Cie intervient à Madagascar, sur l\'ensemble du territoire, au contact direct des réalités institutionnelles, économiques et communautaires.',
+    'about.body2':   'Cet ancrage permet une compréhension fine des dynamiques locales, des équilibres sociaux et des attentes implicites qui structurent les environnements d\'intervention.',
+    'about.body3':   'Parallèlement, notre activité s\'inscrit dans des contextes internationaux. Nous accompagnons principalement des organisations à capitaux étrangers, engagées dans des projets nécessitant une articulation précise entre standards internationaux et réalités locales.',
+    'about.body4':   'Cette double lecture — locale et internationale — constitue un levier central de notre capacité d\'intervention et la marque distinctive de notre approche.',
     'about.stat1':   'Année de fondation',
     'about.stat2':   'Années d\'expertise',
     'about.stat3':   'Vision communication',
@@ -54,8 +56,10 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
 
     // Approach
     'approach.label': 'Notre approche',
-    'approach.title': 'Ce qui nous distingue',
-    'approach.intro': 'Notre agence allie expertise stratégique, réseau d\'influence et compréhension des dynamiques locales et internationales pour produire des solutions pérennes.',
+    'approach.title': 'Une méthode fondée sur la compréhension et la maîtrise des équilibres',
+    'approach.intro': 'Notre approche repose sur une lecture systémique des situations : nous analysons les interactions entre acteurs, les dynamiques implicites, les perceptions et les zones de tension avant toute prise de parole.',
+    'approach.intro2': 'Cette lecture s\'accompagne d\'une présence terrain permanente, seule façon de saisir les réalités opérationnelles et d\'ajuster les stratégies en continu.',
+    'approach.intro3': 'Nous intervenons avec une exigence de discrétion absolue, condition essentielle pour préserver les intérêts de nos clients et garantir la qualité des échanges.',
     'approach.p1.title': 'Confiance mutuelle',
     'approach.p1.body':  'La confiance à long terme est notre premier actif. Nous cultivons des relations durables avec journalistes, décideurs et partenaires institutionnels.',
     'approach.p2.title': 'Ancrage local',
@@ -68,9 +72,10 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
 
     // Contact
     'contact.label':   'Contact',
-    'contact.title1':  'Parlons de',
-    'contact.title2':  'votre projet.',
-    'contact.desc':    'Que vous souhaitiez renforcer votre image, gérer une crise ou vous implanter à Madagascar, nous sommes à votre écoute.',
+    'contact.title1':  'Prenons le temps',
+    'contact.title2':  'd\'une conversation.',
+    'contact.desc':    'Nous travaillons avec des organisations qui savent ce qu\'elles doivent protéger, et qui cherchent à clarifier leur position dans des environnements exigeants.',
+    'contact.desc2':   'Un premier échange permet d\'identifier rapidement les enjeux et les modalités d\'accompagnement adaptées à votre situation.',
     'contact.address': 'Adresse',
     'contact.email':   'Email',
     'contact.phone':   'Téléphone',
@@ -82,6 +87,8 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'contact.f.submit':     'Envoyer le message',
     'contact.success':      'Merci pour votre message. Nous vous répondrons dans les meilleurs délais.',
   },
+
+// ------------------------------------ ENG FORM ------------------------------------ //
 
   en: {
     // Navbar

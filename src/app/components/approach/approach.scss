@@ -36,7 +36,7 @@
   // ─── Pillars grid ─────────────────────────────────────────────────────────
   &__pillars {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 2.5rem;
     margin-block-end: 5rem;
 

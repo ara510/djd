@@ -11,8 +11,12 @@
           {{ lang.t('about.h2.1') }}<br>
           <em>{{ lang.t('about.h2.2') }}</em>
         </h2>
-        <p class="about__body reveal reveal-delay-3" #revealEl>{{ lang.t('about.body1') }}</p>
-        <p class="about__body reveal reveal-delay-4" #revealEl>{{ lang.t('about.body2') }}</p>
+        <p class="about__body reveal reveal-delay-3" #revealEl>
+          {{ lang.t('about.body1') }} {{ lang.t('about.body2') }}
+        </p>
+
+        <p class="about__body reveal reveal-delay-4" #revealEl>{{ lang.t('about.body3') }}</p>
+        <p class="about__body reveal reveal-delay-4" #revealEl>{{ lang.t('about.body4') }}</p>
 
         <!-- Stats sous le texte -->
         <div class="about__stats">
