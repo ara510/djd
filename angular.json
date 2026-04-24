@@ -87,7 +87,8 @@
               "buildTarget": "djd:build:production"
             },
             "development": {
-              "buildTarget": "djd:build:development"
+              "buildTarget": "djd:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"

@@ -6,6 +6,7 @@ import { ServicesComponent } from './components/services/services';
 import { IzaoComponent }     from './components/izao/izao';
 import { ApproachComponent } from './components/approach/approach';
 import { ContactComponent }  from './components/contact/contact';
+import { ToastComponent }    from './components/toast/toast';
 
 @Component({
   selector: 'app-root',
@@ -18,6 +19,7 @@ import { ContactComponent }  from './components/contact/contact';
     IzaoComponent,
     ApproachComponent,
     ContactComponent,
+    ToastComponent,
   ],
   template: `
     <app-navbar></app-navbar>
@@ -29,6 +31,7 @@ import { ContactComponent }  from './components/contact/contact';
       <app-approach></app-approach>
       <app-contact></app-contact>
     </main>
+    <app-toast></app-toast>
   `,
   styles: [``],
 })

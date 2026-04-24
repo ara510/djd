@@ -42,7 +42,7 @@
       <!-- Form column -->
       <div class="contact-section__form-wrap reveal reveal-delay-3" #revealEl>
 
-        <form *ngIf="!submitted" class="contact-form" (ngSubmit)="onSubmit()" #f="ngForm">
+        <form class="contact-form" (ngSubmit)="onSubmit()" #f="ngForm">
 
           <div class="contact-form__field">
             <label class="contact-form__label" for="name">{{ lang.t('contact.f.name') }}</label>
@@ -75,16 +75,11 @@
               [placeholder]="lang.t('contact.f.message.ph')"></textarea>
           </div>
 
-          <button type="submit" class="contact-form__submit" [disabled]="f.invalid">
-            {{ lang.t('contact.f.submit') }}
+          <button type="submit" class="contact-form__submit" [disabled]="f.invalid || loading">
+            {{ loading ? 'Envoi…' : lang.t('contact.f.submit') }}
           </button>
 
         </form>
-
-        <div *ngIf="submitted" class="contact-form__success">
-          <span class="contact-form__success-icon">✓</span>
-          <p>{{ lang.t('contact.success') }}</p>
-        </div>
 
       </div>
     </div>
