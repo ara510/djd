@@ -1,59 +1,160 @@
-# Dujardin Delacour & Cie 2.0
+# Dujardin Delacour & Cie — Site Vitrine
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.3.
+Site vitrine officiel de **Dujardin Delacour & Cie**, cabinet d'expertise comptable basé à Antananarivo, Madagascar.
 
-## Development server
+> Official showcase website for **Dujardin Delacour & Cie**, an accounting firm based in Antananarivo, Madagascar.
 
-To start a local development server, run:
+---
 
-```bash
-ng serve
+## Stack technique / Tech Stack
+
+| Couche | Technologie |
+|--------|-------------|
+| Frontend | Angular 21 (standalone components, signals) |
+| Styles | SCSS |
+| Backend | Node.js + Express (mailer uniquement) |
+| Mailer | [Resend](https://resend.com) |
+| Déploiement | GitHub Pages (`gh-pages` branch) |
+
+> Le backend se limite strictement à l'envoi d'emails via le formulaire de contact.
+> **Aucune base de données, aucune authentification, aucune API REST complexe.**
+>
+> The backend is strictly limited to sending emails via the contact form.
+> **No database, no authentication, no complex REST API.**
+
+---
+
+## Structure du projet / Project Structure
+
+```
+djd/
+├── src/
+│   ├── app/
+│   │   ├── components/       # Composants Angular (navbar, hero, services, contact…)
+│   │   ├── services/         # TranslationService, ToastService, GalleryService
+│   │   ├── i18n/             # Traductions FR / EN
+│   │   ├── app.ts            # Root component
+│   │   └── app.config.ts     # Providers (HttpClient…)
+│   └── styles.scss           # Variables CSS globales, tokens de design
+├── public/                   # Assets statiques (images, logo, favicon)
+├── server/
+│   ├── index.js              # Serveur Express — POST /api/contact
+│   ├── package.json
+│   └── .env                  # Clé API Resend (non committé)
+├── proxy.conf.json           # Proxy Angular dev → backend :3000
+└── angular.json
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+---
 
-## Code scaffolding
+## Installation & Démarrage / Installation & Getting Started
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+### Prérequis / Prerequisites
 
-```bash
-ng generate component component-name
-```
+- Node.js ≥ 18
+- npm ≥ 9
+- Angular CLI : `npm install -g @angular/cli`
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+---
 
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
+### 1. Frontend Angular
 
 ```bash
-ng build
+# Cloner le repo
+git clone https://github.com/ara510/djd.git
+cd djd
+
+# Installer les dépendances Angular
+npm install
+
+# Démarrer en développement (avec proxy vers le backend)
+npm start
+# → http://localhost:4200
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+---
 
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+### 2. Backend Mailer (formulaire de contact)
 
 ```bash
-ng test
+cd server
+
+# Installer les dépendances du backend
+npm install
+
+# Créer le fichier d'environnement
+cp .env.example .env   # ou créer manuellement (voir ci-dessous)
 ```
 
-## Running end-to-end tests
+Contenu du fichier `server/.env` :
 
-For end-to-end (e2e) testing, run:
+```env
+RESEND_API_KEY=re_VOTRE_CLE_API_ICI
+PORT=3000
+```
+
+Obtenir une clé API gratuite sur [resend.com](https://resend.com).
 
 ```bash
-ng e2e
+# Démarrer le backend
+node index.js
+# → http://localhost:3000
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+> En développement, le proxy Angular (`proxy.conf.json`) redirige automatiquement
+> les requêtes `/api/*` vers `http://localhost:3000`. Les deux serveurs doivent
+> donc tourner en parallèle.
+>
+> In development, the Angular proxy (`proxy.conf.json`) automatically forwards
+> `/api/*` requests to `http://localhost:3000`. Both servers must run in parallel.
 
-## Additional Resources
+---
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+## Build & Déploiement / Build & Deployment
+
+### Build de production
+
+```bash
+ng build --base-href /djd/
+```
+
+Les fichiers sont générés dans `dist/djd/browser/`.
+
+### Déployer sur GitHub Pages
+
+```bash
+npx angular-cli-ghpages --dir=dist/djd/browser
+```
+
+> Le backend Node.js n'est **pas** déployé sur GitHub Pages (site statique uniquement).
+> Pour la production, héberger `server/` sur un service comme Railway, Render ou Fly.io.
+>
+> The Node.js backend is **not** deployed to GitHub Pages (static site only).
+> For production, host `server/` on a service like Railway, Render, or Fly.io.
+
+---
+
+## Internationalisation / i18n
+
+Le site supporte le français et l'anglais via un service de traduction maison (`TranslationService`).
+Les clés de traduction sont centralisées dans `src/app/i18n/translations.ts`.
+
+The site supports French and English via a custom translation service (`TranslationService`).
+Translation keys are centralised in `src/app/i18n/translations.ts`.
+
+---
+
+## Variables d'environnement / Environment Variables
+
+| Variable | Description | Requis |
+|----------|-------------|--------|
+| `RESEND_API_KEY` | Clé API Resend pour l'envoi d'emails | Oui |
+| `PORT` | Port du serveur backend (défaut : 3000) | Non |
+
+---
+
+## Contacts projet / Project Contacts
+
+- **Société** : Dujardin Delacour & Cie — 16 Rue Dr Raharinosy, Andohalo, Antananarivo 101
+- **Email** : mathilde.lebon@dujardin-delacour.com
+- **Tél** : +261 020 85 203 55
