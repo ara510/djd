@@ -1,8 +1,8 @@
 # Dujardin Delacour & Cie — Site Vitrine
 
-Site vitrine officiel de **Dujardin Delacour & Cie**, cabinet d'expertise comptable basé à Antananarivo, Madagascar.
+Site vitrine officiel de **Dujardin Delacour & Cie**
 
-> Official showcase website for **Dujardin Delacour & Cie**, an accounting firm based in Antananarivo, Madagascar.
+> Official showcase website for **Dujardin Delacour & Cie**
 
 ---
 
