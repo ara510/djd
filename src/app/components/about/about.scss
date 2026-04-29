@@ -51,6 +51,7 @@
     font-size: clamp(2rem, 4vw, 2.8rem);
     color: var(--color-accent);
     line-height: 1;
+    font-variant-numeric: tabular-nums;
   }
 
   &__stat-label {

@@ -25,7 +25,7 @@
             class="about__stat reveal"
             [class]="'reveal-delay-' + (i + 2)"
             #revealEl>
-            <span class="about__stat-value display">{{ stat.value }}</span>
+            <span class="about__stat-value display">{{ stat.current }}{{ stat.suffix }}</span>
             <span class="about__stat-label">{{ lang.t(stat.key) }}</span>
           </div>
         </div>
