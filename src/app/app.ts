@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { NavbarComponent }   from './components/navbar/navbar';
 import { HeroComponent }     from './components/hero/hero';
 import { AboutComponent }    from './components/about/about';
@@ -7,6 +7,8 @@ import { IzaoComponent }     from './components/izao/izao';
 import { ApproachComponent } from './components/approach/approach';
 import { ContactComponent }  from './components/contact/contact';
 import { ToastComponent }    from './components/toast/toast';
+import { AuthComponent }     from './components/auth/auth';
+import { ProfileComponent }  from './components/profile/profile';
 
 @Component({
   selector: 'app-root',
@@ -20,9 +22,15 @@ import { ToastComponent }    from './components/toast/toast';
     ApproachComponent,
     ContactComponent,
     ToastComponent,
+    AuthComponent,
+    ProfileComponent,
   ],
   template: `
-    <app-navbar></app-navbar>
+    <app-navbar
+      (openAuth)="showAuth.set(true)"
+      (openProfile)="showProfile.set(true)">
+    </app-navbar>
+
     <main>
       <app-hero></app-hero>
       <app-about></app-about>
@@ -31,8 +39,19 @@ import { ToastComponent }    from './components/toast/toast';
       <app-approach></app-approach>
       <app-contact></app-contact>
     </main>
+
     <app-toast></app-toast>
+
+    @if (showAuth()) {
+      <app-auth (closed)="showAuth.set(false)"></app-auth>
+    }
+    @if (showProfile()) {
+      <app-profile (closed)="showProfile.set(false)"></app-profile>
+    }
   `,
   styles: [``],
 })
-export class App {}
+export class App {
+  showAuth    = signal(false);
+  showProfile = signal(false);
+}

@@ -1,8 +1,9 @@
-import { Component, HostListener, OnInit, inject, signal } from '@angular/core';
+import { Component, HostListener, OnInit, inject, signal, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslationService } from '../../services/translation.service';
 import { GalleryService }   from '../../services/gallery.service';
 import { GalleryComponent } from '../gallery/gallery';
+import { AuthService }      from '../../services/auth.service';
 
 interface NavLink { target: string; key: string; }
 
@@ -16,6 +17,10 @@ interface NavLink { target: string; key: string; }
 export class NavbarComponent implements OnInit {
   lang    = inject(TranslationService);
   gallery = inject(GalleryService);
+  auth    = inject(AuthService);
+
+  openAuth    = output<void>();
+  openProfile = output<void>();
 
   scrolled      = signal(false);
   menuOpen      = signal(false);
@@ -55,4 +60,6 @@ export class NavbarComponent implements OnInit {
   }
 
   toggleMenu() { this.menuOpen.update(v => !v); }
+
+  currentYear = new Date().getFullYear();
 }

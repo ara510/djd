@@ -46,6 +46,28 @@
           (click)="lang.lang.set('en')"
           type="button">EN</button>
       </div>
+
+      <span class="navbar__sep" aria-hidden="true"></span>
+
+      <!-- Bouton profil -->
+      @if (auth.currentUser()) {
+        <button class="navbar__profile-btn navbar__profile-btn--logged" [class.navbar__profile-btn--has-avatar]="!!auth.currentUser()!.avatar" (click)="openProfile.emit()" type="button" [attr.aria-label]="auth.currentUser()!.username">
+          @if (auth.currentUser()!.avatar) {
+            <img [src]="auth.currentUser()!.avatar!" class="navbar__profile-avatar" [alt]="auth.currentUser()!.username" />
+          } @else {
+            <span class="navbar__profile-initials">
+              {{ auth.currentUser()!.nom[0] }}{{ auth.currentUser()!.prenoms[0] }}
+            </span>
+          }
+        </button>
+      } @else {
+        <button class="navbar__profile-btn" (click)="openAuth.emit()" type="button" aria-label="Connexion">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </button>
+      }
     </nav>
 
     <!-- Mobile burger -->
@@ -57,27 +79,40 @@
 
   <!-- Mobile drawer -->
   <nav class="navbar__drawer" [class.open]="menuOpen()" aria-label="Navigation mobile">
-    <button
-      *ngFor="let link of links"
-      class="navbar__drawer-link"
-      (click)="scrollTo(link.target)"
-      type="button">
+    <button *ngFor="let link of links" class="navbar__drawer-link" (click)="scrollTo(link.target)" type="button">
       {{ lang.t(link.key) }}
     </button>
-    <!-- Bouton galerie mobile -->
-    <button class="navbar__drawer-gallery" (click)="gallery.open(); menuOpen.set(false)" type="button">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-           stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-        <circle cx="12" cy="13" r="4"/>
-      </svg>
-      {{ lang.lang() === 'fr' ? 'Photos' : 'Gallery' }}
-    </button>
 
-    <div class="navbar__drawer-lang">
-      <button class="navbar__lang-btn" [class.active]="lang.lang() === 'fr'" (click)="lang.lang.set('fr')" type="button">FR</button>
-      <span class="navbar__lang-div">|</span>
-      <button class="navbar__lang-btn" [class.active]="lang.lang() === 'en'" (click)="lang.lang.set('en')" type="button">EN</button>
+    <div class="navbar__drawer-row">
+      <button class="navbar__drawer-action" (click)="gallery.open(); menuOpen.set(false)" type="button">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+        {{ lang.lang() === 'fr' ? 'Photos' : 'Gallery' }}
+      </button>
+
+      @if (auth.currentUser()) {
+        <button class="navbar__drawer-action navbar__drawer-action--accent" (click)="openProfile.emit(); menuOpen.set(false)" type="button">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+          @{{ auth.currentUser()!.username }}
+        </button>
+      } @else {
+        <button class="navbar__drawer-action navbar__drawer-action--accent" (click)="openAuth.emit(); menuOpen.set(false)" type="button">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+          {{ lang.lang() === 'fr' ? 'Connexion' : 'Sign in' }}
+        </button>
+      }
+
+      <div class="navbar__drawer-lang">
+        <button class="navbar__lang-btn" [class.active]="lang.lang() === 'fr'" (click)="lang.lang.set('fr')" type="button">FR</button>
+        <span class="navbar__lang-div">|</span>
+        <button class="navbar__lang-btn" [class.active]="lang.lang() === 'en'" (click)="lang.lang.set('en')" type="button">EN</button>
+      </div>
     </div>
   </nav>
 </header>

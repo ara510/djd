@@ -1,0 +1,229 @@
+<div class="auth-overlay" [class.auth-overlay--out]="closing()" (click)="close()"></div>
+
+<div class="auth-modal" [class.auth-modal--out]="closing()">
+
+  <!-- ── PANNEAU GAUCHE — animation + branding ── -->
+  <div class="auth-panel">
+    <img src="DJD.png" alt="Dujardin Delacour" class="auth-panel__logo" />
+
+    <div class="auth-panel__lottie" #lottieContainer></div>
+
+    <div class="auth-panel__footer">
+      <p class="auth-panel__tagline">{{ lang.t('auth.panel.tagline') }}</p>
+      <hr class="auth-panel__rule" />
+      @if (tab() === 'login' && !forgotPasswordView()) {
+        <p class="auth-panel__switch-text">{{ lang.t('auth.panel.no_account') }}</p>
+        <button class="auth-panel__switch-btn" type="button" (click)="switchTab('signup')">
+          {{ lang.t('auth.panel.join') }} →
+        </button>
+      } @else {
+        <p class="auth-panel__switch-text">{{ lang.t('auth.panel.has_account') }}</p>
+        <button class="auth-panel__switch-btn" type="button" (click)="switchTab('login')">
+          {{ lang.t('auth.panel.signin') }} →
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- ── PANNEAU DROIT — formulaire ── -->
+  <div class="auth-form-wrap">
+
+    <!-- Close -->
+    <button class="auth-form-wrap__close" (click)="close()" type="button" aria-label="Fermer">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+
+    <!-- LOGIN -->
+    @if (tab() === 'login' && !forgotPasswordView()) {
+      <form class="auth-form" (ngSubmit)="onLogin()" #lf="ngForm">
+        <h2 class="auth-form__title">{{ lang.t('auth.login.title') }}</h2>
+
+        <div class="auth-form__field">
+          <label class="auth-form__label">{{ lang.t('auth.login.username') }}</label>
+          <input class="auth-form__input" type="text" name="username"
+                 [(ngModel)]="login.username" required autocomplete="username"
+                 placeholder="votre_nom123" />
+        </div>
+
+        <div class="auth-form__field">
+          <label class="auth-form__label">{{ lang.t('auth.login.password') }}</label>
+          <div class="auth-form__pwd-wrap">
+            <input class="auth-form__input" [type]="showLoginPwd() ? 'text' : 'password'" name="password"
+                   [(ngModel)]="login.password" required autocomplete="current-password"
+                   placeholder="••••••••" />
+            <button class="auth-form__eye" type="button" (click)="showLoginPwd.set(!showLoginPwd())" tabindex="-1">
+              @if (showLoginPwd()) {
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              } @else {
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              }
+            </button>
+          </div>
+        </div>
+
+        <button class="auth-form__forgot" type="button" (click)="forgotPasswordView.set(true)">
+          {{ lang.t('auth.login.forgot') }}
+        </button>
+
+        <button class="auth-form__submit" type="submit" [disabled]="lf.invalid || loading()">
+          {{ loading() ? lang.t('auth.login.loading') : lang.t('auth.login.submit') }}
+        </button>
+      </form>
+    }
+
+    <!-- MOT DE PASSE OUBLIÉ -->
+    @if (forgotPasswordView()) {
+      <div class="auth-form auth-form--forgot">
+        <h2 class="auth-form__title">{{ lang.t('auth.forgot.title') }}</h2>
+        <p class="auth-form__desc">{{ lang.t('auth.forgot.desc') }}</p>
+
+        <div class="auth-form__field">
+          <label class="auth-form__label">{{ lang.t('auth.forgot.email') }}</label>
+          <input class="auth-form__input" type="email" [placeholder]="lang.lang() === 'fr' ? 'votre@email.com' : 'your@email.com'" />
+        </div>
+
+        <button class="auth-form__submit" type="button" disabled>
+          {{ lang.t('auth.forgot.submit') }}
+        </button>
+
+        <button class="auth-form__back" type="button" (click)="forgotPasswordView.set(false)">
+          ← {{ lang.t('auth.forgot.back') }}
+        </button>
+      </div>
+    }
+
+    <!-- SIGN UP -->
+    @if (tab() === 'signup' && !forgotPasswordView()) {
+      <form class="auth-form auth-form--signup" (ngSubmit)="onSignup()" #sf="ngForm">
+        <h2 class="auth-form__title">{{ lang.t('auth.signup.title') }}</h2>
+
+        <div class="auth-form__row">
+          <div class="auth-form__field">
+            <label class="auth-form__label">{{ lang.t('auth.signup.nom') }}</label>
+            <input class="auth-form__input" type="text" name="nom"
+                   [(ngModel)]="signup.nom" required placeholder="Dupont" />
+          </div>
+          <div class="auth-form__field">
+            <label class="auth-form__label">{{ lang.t('auth.signup.prenoms') }}</label>
+            <input class="auth-form__input" type="text" name="prenoms"
+                   [(ngModel)]="signup.prenoms" required placeholder="Marie" />
+          </div>
+        </div>
+
+        <div class="auth-form__field">
+          <label class="auth-form__label">{{ lang.t('auth.signup.dob') }}</label>
+          <input class="auth-form__input" type="date" name="date_naissance"
+                 [(ngModel)]="signup.date_naissance" required />
+        </div>
+
+        <div class="auth-form__field">
+          <label class="auth-form__label">{{ lang.t('auth.signup.email') }}</label>
+          <input class="auth-form__input" type="email" name="email"
+                 [(ngModel)]="signup.email" required
+                 [placeholder]="lang.lang() === 'fr' ? 'votre@email.com' : 'your@email.com'" />
+        </div>
+
+        <div class="auth-form__field">
+          <label class="auth-form__label">
+            {{ lang.t('auth.signup.username') }}
+            <span class="auth-form__hint"> — {{ lang.t('auth.signup.username.hint') }}</span>
+          </label>
+          <input class="auth-form__input" type="text" name="username"
+                 [(ngModel)]="signup.username" required pattern="[a-zA-Z0-9]+"
+                 placeholder="dupont42" />
+        </div>
+
+        <div class="auth-form__row">
+          <div class="auth-form__field">
+            <label class="auth-form__label">{{ lang.t('auth.signup.password') }}</label>
+            <div class="auth-form__pwd-wrap">
+              <input class="auth-form__input" [type]="showPwd() ? 'text' : 'password'" name="password"
+                     [(ngModel)]="signup.password" required
+                     autocomplete="new-password" placeholder="••••••••" />
+              <button class="auth-form__eye" type="button" (click)="showPwd.set(!showPwd())" tabindex="-1">
+                @if (showPwd()) {
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                    <line x1="1" y1="1" x2="23" y2="23"/>
+                  </svg>
+                } @else {
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                }
+              </button>
+            </div>
+          </div>
+          <div class="auth-form__field">
+            <label class="auth-form__label">{{ lang.t('auth.signup.confirm') }}</label>
+            <div class="auth-form__pwd-wrap">
+              <input class="auth-form__input" [type]="showConfirmPwd() ? 'text' : 'password'" name="passwordConfirm"
+                     [(ngModel)]="signup.passwordConfirm" required
+                     autocomplete="new-password" placeholder="••••••••" />
+              <button class="auth-form__eye" type="button" (click)="showConfirmPwd.set(!showConfirmPwd())" tabindex="-1">
+                @if (showConfirmPwd()) {
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                    <line x1="1" y1="1" x2="23" y2="23"/>
+                  </svg>
+                } @else {
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+
+        @if (signup.password.length > 0) {
+          <div class="pwd-strength">
+            <div class="pwd-strength__track">
+              <div class="pwd-strength__fill"
+                   [class.pwd-strength__fill--weak]="pwdStrength === 1"
+                   [class.pwd-strength__fill--medium]="pwdStrength === 2"
+                   [class.pwd-strength__fill--strong]="pwdStrength === 3"
+                   [style.width.%]="pwdStrength * 33.33">
+              </div>
+            </div>
+            <span class="pwd-strength__label"
+                  [class.pwd-strength__label--weak]="pwdStrength === 1"
+                  [class.pwd-strength__label--medium]="pwdStrength === 2"
+                  [class.pwd-strength__label--strong]="pwdStrength === 3">
+              {{ strengthLabel }}
+            </span>
+          </div>
+        }
+
+        <label class="auth-form__checkbox">
+          <input type="checkbox" name="acceptTerms" [(ngModel)]="signup.acceptTerms" />
+          <span>
+            {{ lang.t('auth.signup.terms') }}
+            <a href="#" class="auth-form__terms-link" (click)="$event.preventDefault()">{{ lang.t('auth.signup.terms.link1') }}</a>
+            {{ lang.t('auth.signup.terms.and') }}
+            <a href="#" class="auth-form__terms-link" (click)="$event.preventDefault()">{{ lang.t('auth.signup.terms.link2') }}</a>
+          </span>
+        </label>
+
+        <button class="auth-form__submit" type="submit"
+                [disabled]="sf.invalid || !signup.acceptTerms || !pwdValid || loading()">
+          {{ loading() ? lang.t('auth.signup.loading') : lang.t('auth.signup.submit') }}
+        </button>
+      </form>
+    }
+
+  </div>
+</div>
