@@ -19,7 +19,8 @@ const db = new Pool({
   password: process.env.DB_PASSWORD || '',
 });
 
-app.use(cors({ origin: 'http://localhost:4200' }));
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:4200').split(',');
+app.use(cors({ origin: allowedOrigins }));
 app.use(express.json({ limit: '5mb' }));
 
 // Auto-migration

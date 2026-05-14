@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { TranslationService } from '../../services/translation.service';
 import { ToastService } from '../../services/toast.service';
 import lottie, { AnimationItem } from 'lottie-web';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-contact',
@@ -50,7 +51,7 @@ export class ContactComponent implements OnInit, AfterViewInit, OnDestroy {
       setTimeout(() => { this.loadAnim?.stop(); this.loading = false; fn(); }, wait);
     };
 
-    this.http.post<{ success: boolean }>('/api/contact', this.form).subscribe({
+    this.http.post<{ success: boolean }>(`${environment.apiUrl}/api/contact`, this.form).subscribe({
       next: () => finish(() => {
         this.toast.show('Message envoyé avec succès !', 'success');
         this.form = { name: '', email: '', message: '' };

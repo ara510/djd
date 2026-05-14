@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
 import { ToastService } from './toast.service';
 import { TranslationService } from './translation.service';
+import { environment } from '../../environments/environment';
 
 export interface User {
   id: number;
@@ -29,6 +30,7 @@ export class AuthService {
   private toast = inject(ToastService);
   private lang  = inject(TranslationService);
   private zone  = inject(NgZone);
+  private api   = environment.apiUrl;
 
   private readonly TIMEOUT_MS = 5 * 60 * 60 * 1000; // 5 heures
   private inactivityTimer?: ReturnType<typeof setTimeout>;
@@ -82,13 +84,13 @@ export class AuthService {
   }
 
   register(data: object) {
-    return this.http.post<{ token: string; user: User }>('/api/auth/register', data).pipe(
+    return this.http.post<{ token: string; user: User }>('${this.api}/api/auth/register', data).pipe(
       tap(res => this.saveSession(res.token, res.user))
     );
   }
 
   login(username: string, password: string) {
-    return this.http.post<{ token: string; user: User }>('/api/auth/login', { username, password }).pipe(
+    return this.http.post<{ token: string; user: User }>('${this.api}/api/auth/login', { username, password }).pipe(
       tap(res => this.saveSession(res.token, res.user))
     );
   }
@@ -102,7 +104,7 @@ export class AuthService {
   }
 
   updateProfile(data: object) {
-    return this.http.patch<{ token: string; user: User }>('/api/auth/me', data, {
+    return this.http.patch<{ token: string; user: User }>('${this.api}/api/auth/me', data, {
       headers: { Authorization: `Bearer ${this.token()}` },
     }).pipe(
       tap(res => this.saveSession(res.token, res.user))
@@ -110,14 +112,14 @@ export class AuthService {
   }
 
   deleteAccount(password: string) {
-    return this.http.delete<{ success: boolean }>('/api/auth/me', {
+    return this.http.delete<{ success: boolean }>('${this.api}/api/auth/me', {
       headers: { Authorization: `Bearer ${this.token()}` },
       body: { password },
     });
   }
 
   recoverAccount() {
-    return this.http.post<{ token: string; user: User }>('/api/auth/recover', {}, {
+    return this.http.post<{ token: string; user: User }>('${this.api}/api/auth/recover', {}, {
       headers: { Authorization: `Bearer ${this.token()}` },
     }).pipe(
       tap(res => this.saveSession(res.token, res.user))
@@ -125,7 +127,7 @@ export class AuthService {
   }
 
   private loadMe() {
-    this.http.get<User>('/api/auth/me', {
+    this.http.get<User>('${this.api}/api/auth/me', {
       headers: { Authorization: `Bearer ${this.token()}` },
     }).subscribe({
       next:  user  => this.currentUser.set(user),
