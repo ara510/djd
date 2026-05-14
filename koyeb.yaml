@@ -1,0 +1,24 @@
+name: djd-api
+services:
+  - name: djd-api
+    type: web
+    git:
+      repository: github.com/ara510/djd
+      branch: hosting-test
+    run_command: node index.js
+    build_command: npm install
+    working_directory: server
+    ports:
+      - port: 3000
+        protocol: http
+    env:
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGIN
+        value: https://ara510.github.io
+      - key: JWT_SECRET
+        secret: true
+      - key: RESEND_API_KEY
+        secret: true
+      - key: DATABASE_URL
+        secret: true

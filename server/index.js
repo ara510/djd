@@ -11,13 +11,18 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const PORT   = process.env.PORT || 3000;
 
 // ─── PostgreSQL pool ───────────────────────────────────────────────────────────
-const db = new Pool({
-  host:     process.env.DB_HOST     || 'localhost',
-  port:     process.env.DB_PORT     || 5432,
-  database: process.env.DB_NAME     || 'djd-ws-db',
-  user:     process.env.DB_USER     || 'postgres',
-  password: process.env.DB_PASSWORD || '',
-});
+// En prod (Neon) : DATABASE_URL avec SSL. En dev : paramètres individuels.
+const db = new Pool(
+  process.env.DATABASE_URL
+    ? { connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }
+    : {
+        host:     process.env.DB_HOST     || 'localhost',
+        port:     process.env.DB_PORT     || 5432,
+        database: process.env.DB_NAME     || 'djd-ws-db',
+        user:     process.env.DB_USER     || 'postgres',
+        password: process.env.DB_PASSWORD || '',
+      }
+);
 
 const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:4200').split(',');
 app.use(cors({ origin: allowedOrigins }));
