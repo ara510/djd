@@ -1,4 +1,5 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject, HostListener } from '@angular/core';
+import { AuthService } from './services/auth.service';
 import { NavbarComponent }   from './components/navbar/navbar';
 import { HeroComponent }     from './components/hero/hero';
 import { AboutComponent }    from './components/about/about';
@@ -52,6 +53,14 @@ import { ProfileComponent }  from './components/profile/profile';
   styles: [``],
 })
 export class App {
+  private auth = inject(AuthService);
   showAuth    = signal(false);
   showProfile = signal(false);
+
+  @HostListener('document:mousemove')
+  @HostListener('document:click')
+  @HostListener('document:keydown')
+  @HostListener('document:scroll')
+  @HostListener('document:touchstart')
+  onActivity() { this.auth.resetActivityTimer(); }
 }

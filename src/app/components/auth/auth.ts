@@ -1,4 +1,4 @@
-import { Component, signal, inject, output, AfterViewInit, ElementRef, ViewChild, OnDestroy } from '@angular/core';
+import { Component, signal, inject, output, AfterViewInit, ElementRef, ViewChild, ViewChildren, QueryList, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
@@ -17,6 +17,7 @@ type Tab = 'login' | 'signup';
 })
 export class AuthComponent implements AfterViewInit, OnDestroy {
   @ViewChild('lottieContainer') lottieRef!: ElementRef<HTMLDivElement>;
+  @ViewChild('authLoadingLottie') authLoadingRef!: ElementRef<HTMLDivElement>;
 
   auth  = inject(AuthService);
   toast = inject(ToastService);
@@ -34,6 +35,7 @@ export class AuthComponent implements AfterViewInit, OnDestroy {
   showConfirmPwd = signal(false);
 
   private anim!: AnimationItem;
+  private loadAnim?: AnimationItem;
 
   login = { username: '', password: '' };
 
@@ -44,15 +46,22 @@ export class AuthComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit() {
     this.anim = lottie.loadAnimation({
-      container:  this.lottieRef.nativeElement,
-      renderer:   'svg',
-      loop:       true,
-      autoplay:   true,
-      path:       'assets/shapes.json',
+      container: this.lottieRef.nativeElement,
+      renderer:  'svg',
+      loop:      true,
+      autoplay:  true,
+      path:      'assets/shapes.json',
+    });
+    this.loadAnim = lottie.loadAnimation({
+      container: this.authLoadingRef.nativeElement,
+      renderer:  'svg',
+      loop:      true,
+      autoplay:  false,
+      path:      'assets/loading.json',
     });
   }
 
-  ngOnDestroy() { this.anim?.destroy(); }
+  ngOnDestroy() { this.anim?.destroy(); this.loadAnim?.destroy(); }
 
   get pwdStrength(): 0 | 1 | 2 | 3 {
     const p = this.signup.password;
@@ -86,19 +95,24 @@ export class AuthComponent implements AfterViewInit, OnDestroy {
     setTimeout(() => { this.closing.set(false); this.closed.emit(); }, 300);
   }
 
+  private finishLoading(fn: () => void, start: number) {
+    const wait = Math.max(0, 1500 - (Date.now() - start));
+    setTimeout(() => { this.loadAnim?.stop(); this.loading.set(false); fn(); }, wait);
+  }
+
   onLogin() {
     if (this.loading()) return;
     this.loading.set(true);
+    this.loadAnim?.play();
+    const start = Date.now();
     this.auth.login(this.login.username, this.login.password).subscribe({
-      next: () => {
+      next: () => this.finishLoading(() => {
         this.toast.show(this.lang.lang() === 'fr' ? 'Connexion réussie !' : 'Signed in successfully!', 'success');
         this.close();
-        this.loading.set(false);
-      },
-      error: (err) => {
+      }, start),
+      error: (err) => this.finishLoading(() => {
         this.toast.show(err.error?.error || 'Erreur de connexion.', 'error');
-        this.loading.set(false);
-      },
+      }, start),
     });
   }
 
@@ -113,17 +127,17 @@ export class AuthComponent implements AfterViewInit, OnDestroy {
       return;
     }
     this.loading.set(true);
+    this.loadAnim?.play();
+    const start = Date.now();
     const { passwordConfirm, acceptTerms, ...payload } = this.signup;
     this.auth.register(payload).subscribe({
-      next: () => {
+      next: () => this.finishLoading(() => {
         this.toast.show(this.lang.lang() === 'fr' ? 'Compte créé avec succès !' : 'Account created successfully!', 'success');
         this.close();
-        this.loading.set(false);
-      },
-      error: (err) => {
+      }, start),
+      error: (err) => this.finishLoading(() => {
         this.toast.show(err.error?.error || 'Erreur lors de l\'inscription.', 'error');
-        this.loading.set(false);
-      },
+      }, start),
     });
   }
 }

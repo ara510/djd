@@ -2,6 +2,11 @@
 
 <div class="profile-panel" [class.profile-panel--out]="closing()">
 
+  <!-- Logout loading overlay -->
+  <div class="profile-logout-loading" [class.profile-logout-loading--active]="showLogoutAnim()">
+    <div #logoutLottie class="profile-logout-loading__anim"></div>
+  </div>
+
   <div class="profile-panel__header">
     <span class="profile-panel__title">
       @if (showSubscription()) {

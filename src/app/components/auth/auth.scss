@@ -117,6 +117,24 @@
   }
 }
 
+// ─── Loading overlay (panneau droit) ──────────────────────────────────────────
+.auth-loading {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: var(--color-bg);
+  align-items: center;
+  justify-content: center;
+
+  &--active { display: flex; }
+
+  &__anim {
+    width: 210px;
+    height: 210px;
+  }
+}
+
 // ─── Panneau droit ─────────────────────────────────────────────────────────────
 .auth-form-wrap {
   background: var(--color-bg);

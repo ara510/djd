@@ -1,9 +1,10 @@
-import { Component, inject, output, signal } from '@angular/core';
+import { Component, inject, output, signal, AfterViewInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
 import { TranslationService } from '../../services/translation.service';
+import lottie, { AnimationItem } from 'lottie-web';
 
 @Component({
   selector: 'app-profile',
@@ -12,7 +13,8 @@ import { TranslationService } from '../../services/translation.service';
   templateUrl: './profile.html',
   styleUrl: './profile.scss',
 })
-export class ProfileComponent {
+export class ProfileComponent implements AfterViewInit, OnDestroy {
+  @ViewChild('logoutLottie') logoutLottieRef!: ElementRef<HTMLDivElement>;
   auth   = inject(AuthService);
   toast  = inject(ToastService);
   lang   = inject(TranslationService);
@@ -25,7 +27,10 @@ export class ProfileComponent {
   billing            = signal<'monthly' | 'yearly'>('monthly');
   showDeleteZone     = signal(false);
   showDeleteConfirm  = signal(false);
+  showLogoutAnim     = signal(false);
   deletePassword     = '';
+
+  private logoutAnim?: AnimationItem;
 
   readonly currentPlan = 'free';
 
@@ -196,9 +201,30 @@ export class ProfileComponent {
     });
   }
 
+  ngAfterViewInit() {
+    this.logoutAnim = lottie.loadAnimation({
+      container: this.logoutLottieRef.nativeElement,
+      renderer:  'svg',
+      loop:      true,
+      autoplay:  false,
+      path:      'assets/loading.json',
+    });
+  }
+
+  ngOnDestroy() { this.logoutAnim?.destroy(); }
+
   close() {
     this.closing.set(true);
     setTimeout(() => { this.closing.set(false); this.closed.emit(); }, 300);
   }
-  logout() { this.auth.logout(); this.close(); }
+
+  logout() {
+    this.showLogoutAnim.set(true);
+    this.logoutAnim?.play();
+    setTimeout(() => {
+      this.logoutAnim?.stop();
+      this.auth.logout();
+      this.close();
+    }, 1500);
+  }
 }

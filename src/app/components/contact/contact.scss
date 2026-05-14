@@ -122,6 +122,16 @@
     &:focus { border-color: var(--color-accent); }
   }
 
+  &__submit-area {
+    display: flex;
+    align-items: center;
+  }
+
+  &__loading-anim {
+    width: 160px;
+    height: 160px;
+  }
+
   &__submit {
     align-self: flex-start;
     padding: 0.9rem 2.5rem;

@@ -1,3 +1,21 @@
+.profile-logout-loading {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background: var(--color-bg);
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+
+  &--active { display: flex; }
+
+  &__anim {
+    width: 210px;
+    height: 210px;
+  }
+}
+
 .profile-overlay {
   position: fixed;
   inset: 0;

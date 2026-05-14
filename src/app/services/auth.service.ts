@@ -1,6 +1,8 @@
-import { Injectable, signal, inject } from '@angular/core';
+import { Injectable, signal, inject, NgZone } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
+import { ToastService } from './toast.service';
+import { TranslationService } from './translation.service';
 
 export interface User {
   id: number;
@@ -23,13 +25,60 @@ export interface User {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private http = inject(HttpClient);
+  private http  = inject(HttpClient);
+  private toast = inject(ToastService);
+  private lang  = inject(TranslationService);
+  private zone  = inject(NgZone);
+
+  private readonly TIMEOUT_MS = 5 * 60 * 60 * 1000; // 5 heures
+  private inactivityTimer?: ReturnType<typeof setTimeout>;
 
   currentUser = signal<User | null>(null);
   token       = signal<string | null>(localStorage.getItem('djd_token'));
 
   constructor() {
-    if (this.token()) this.loadMe();
+    if (this.token()) {
+      if (this.isSessionExpired()) {
+        this.expireSession();
+      } else {
+        this.loadMe();
+        this.startInactivityTimer();
+      }
+    }
+  }
+
+  /** Appelé à chaque événement d'activité utilisateur (throttle 30s). */
+  resetActivityTimer() {
+    if (!this.currentUser()) return;
+    const now  = Date.now();
+    const last = parseInt(localStorage.getItem('djd_last_activity') || '0', 10);
+    if (now - last < 30_000) return;
+    localStorage.setItem('djd_last_activity', now.toString());
+    this.startInactivityTimer();
+  }
+
+  private isSessionExpired(): boolean {
+    const last = localStorage.getItem('djd_last_activity');
+    if (!last) return false;
+    return Date.now() - parseInt(last, 10) > this.TIMEOUT_MS;
+  }
+
+  private startInactivityTimer() {
+    clearTimeout(this.inactivityTimer);
+    this.inactivityTimer = setTimeout(
+      () => this.zone.run(() => this.expireSession()),
+      this.TIMEOUT_MS
+    );
+  }
+
+  private expireSession() {
+    this.logout();
+    this.toast.show(
+      this.lang.lang() === 'fr'
+        ? 'Session expirée — veuillez vous reconnecter.'
+        : 'Session expired — please sign in again.',
+      'error'
+    );
   }
 
   register(data: object) {
@@ -45,7 +94,9 @@ export class AuthService {
   }
 
   logout() {
+    clearTimeout(this.inactivityTimer);
     localStorage.removeItem('djd_token');
+    localStorage.removeItem('djd_last_activity');
     this.token.set(null);
     this.currentUser.set(null);
   }
@@ -84,7 +135,9 @@ export class AuthService {
 
   private saveSession(token: string, user: User) {
     localStorage.setItem('djd_token', token);
+    localStorage.setItem('djd_last_activity', Date.now().toString());
     this.token.set(token);
     this.currentUser.set(user);
+    this.startInactivityTimer();
   }
 }

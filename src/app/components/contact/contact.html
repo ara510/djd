@@ -75,9 +75,16 @@
               [placeholder]="lang.t('contact.f.message.ph')"></textarea>
           </div>
 
-          <button type="submit" class="contact-form__submit" [disabled]="f.invalid || loading">
-            {{ loading ? 'Envoi…' : lang.t('contact.f.submit') }}
-          </button>
+          <div class="contact-form__submit-area">
+            <button type="submit" class="contact-form__submit"
+                    [disabled]="f.invalid || loading"
+                    [style.display]="loading ? 'none' : null">
+              {{ lang.t('contact.f.submit') }}
+            </button>
+            <div class="contact-form__loading-anim"
+                 [style.display]="loading ? 'block' : 'none'"
+                 #loadingLottie></div>
+          </div>
 
         </form>
 

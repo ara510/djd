@@ -28,6 +28,11 @@
   <!-- ── PANNEAU DROIT — formulaire ── -->
   <div class="auth-form-wrap">
 
+    <!-- Loading overlay -->
+    <div class="auth-loading" [class.auth-loading--active]="loading()">
+      <div #authLoadingLottie class="auth-loading__anim"></div>
+    </div>
+
     <!-- Close -->
     <button class="auth-form-wrap__close" (click)="close()" type="button" aria-label="Fermer">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
