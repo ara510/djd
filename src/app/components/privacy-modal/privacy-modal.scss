@@ -1,0 +1,115 @@
+.privacy-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 25, 22, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 300;
+  animation: privacy-fade-in 0.25s ease;
+  &--out { animation: privacy-fade-out 0.3s ease forwards; }
+}
+
+.privacy-panel {
+  position: fixed;
+  inset-block: 0;
+  inset-inline-end: 0;
+  z-index: 301;
+  width: min(560px, 100vw);
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -12px 0 48px rgba(26, 25, 22, 0.18);
+  animation: privacy-slide-in 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  &--out { animation: privacy-slide-out 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.4rem 1.75rem;
+    border-bottom: 1px solid var(--color-border);
+    flex-shrink: 0;
+  }
+
+  &__title {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--color-ink);
+    letter-spacing: 0.04em;
+  }
+
+  &__close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-ink-muted);
+    padding: 6px;
+    display: flex;
+    transition: color 0.2s;
+    &:hover { color: var(--color-ink); }
+  }
+}
+
+.privacy-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem 1.75rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.privacy-updated {
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+  margin: 0 0 1.5rem;
+}
+
+.privacy-section {
+  padding-block: 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+
+  &:last-child { border-bottom: none; }
+
+  &__title {
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-ink);
+    margin: 0 0 0.75rem;
+    letter-spacing: 0.02em;
+  }
+
+  p {
+    font-size: 0.85rem;
+    color: var(--color-ink-muted);
+    line-height: 1.75;
+    margin: 0 0 0.6rem;
+    &:last-child { margin-bottom: 0; }
+  }
+}
+
+.privacy-list {
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+  line-height: 1.75;
+  margin: 0.4rem 0 0.6rem 1.25rem;
+  padding: 0;
+
+  li { margin-bottom: 0.2rem; }
+
+  strong { color: var(--color-ink); font-weight: 500; }
+}
+
+.privacy-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  &:hover { text-decoration: underline; }
+}
+
+@keyframes privacy-fade-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes privacy-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes privacy-slide-in  { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes privacy-slide-out { from { transform: translateX(0); } to { transform: translateX(100%); } }

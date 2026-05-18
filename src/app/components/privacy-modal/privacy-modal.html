@@ -1,0 +1,179 @@
+<div class="privacy-overlay" [class.privacy-overlay--out]="closing()" (click)="close()"></div>
+
+<div class="privacy-panel" [class.privacy-panel--out]="closing()">
+
+  <div class="privacy-panel__header">
+    <span class="privacy-panel__title">
+      {{ lang.lang() === 'fr' ? 'Politique de confidentialité' : 'Privacy Policy' }}
+    </span>
+    <button class="privacy-panel__close" type="button" (click)="close()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="privacy-body">
+
+    @if (lang.lang() === 'fr') {
+
+      <p class="privacy-updated">Dernière mise à jour : mai 2026</p>
+
+      <section class="privacy-section">
+        <h2 class="privacy-section__title">1. Qui sommes-nous ?</h2>
+        <p>Dujardin Delacour & Cie est un cabinet de conseil financier et juridique, implanté au 16 rue Dr Raharinosy, Andohalo — Antananarivo 101, Madagascar. En utilisant ce site, vous acceptez les présentes conditions.</p>
+      </section>
+
+      <section class="privacy-section">
+        <h2 class="privacy-section__title">2. Données collectées</h2>
+        <p>Lors de la création d'un compte, nous collectons :</p>
+        <ul class="privacy-list">
+          <li>Nom et prénoms</li>
+          <li>Date de naissance</li>
+          <li>Adresse e-mail</li>
+          <li>Nom d'utilisateur</li>
+        </ul>
+        <p>Ces champs sont facultatifs et peuvent être renseignés depuis votre profil :</p>
+        <ul class="privacy-list">
+          <li>Numéro de téléphone</li>
+          <li>Pays et ville de résidence</li>
+          <li>Genre</li>
+          <li>Photo de profil (avatar)</li>
+        </ul>
+        <p>Le formulaire de contact collecte : nom, adresse e-mail et contenu du message.</p>
+      </section>
+
+      <section class="privacy-section">
+        <h2 class="privacy-section__title">3. Finalité du traitement</h2>
+        <ul class="privacy-list">
+          <li><strong>Gestion du compte</strong> — authentification, personnalisation de l'expérience</li>
+          <li><strong>Communication</strong> — réponse aux messages envoyés via le formulaire de contact</li>
+          <li><strong>Sécurité</strong> — protection de votre compte par chiffrement du mot de passe (bcrypt)</li>
+          <li><strong>Amélioration du service</strong> — analyse du fonctionnement interne du site</li>
+        </ul>
+      </section>
+
+      <section class="privacy-section">
+        <h2 class="privacy-section__title">4. Cookies et stockage local</h2>
+        <p>Notre site n'utilise pas de cookies tiers à des fins publicitaires ou de traçage. Nous utilisons uniquement le stockage local (localStorage) du navigateur pour :</p>
+        <ul class="privacy-list">
+          <li><strong>Token de session (JWT)</strong> — durée de validité : 7 jours, supprimé à la déconnexion</li>
+          <li><strong>Préférence de langue</strong> — FR ou EN, persisté entre les visites</li>
+          <li><strong>Acceptation des cookies</strong> — mémorise votre consentement</li>
+          <li><strong>Horodatage d'activité</strong> — permet la déconnexion automatique après 5h d'inactivité</li>
+        </ul>
+      </section>
+
+      <section class="privacy-section">
+        <h2 class="privacy-section__title">5. Conservation des données</h2>
+        <p>Vos données sont conservées tant que votre compte est actif. En cas de suppression de compte, un délai de <strong>7 jours</strong> est accordé pour annuler la suppression. Passé ce délai, le compte est définitivement désactivé.</p>
+      </section>
+
+      <section class="privacy-section">
+        <h2 class="privacy-section__title">6. Sécurité</h2>
+        <p>Les mots de passe sont chiffrés avec l'algorithme bcrypt (facteur de coût 12) et ne sont jamais stockés en clair. Les communications entre votre navigateur et notre serveur sont chiffrées (HTTPS).</p>
+      </section>
+
+      <section class="privacy-section">
+        <h2 class="privacy-section__title">7. Vos droits</h2>
+        <p>Conformément aux lois applicables sur la protection des données, vous disposez des droits suivants :</p>
+        <ul class="privacy-list">
+          <li><strong>Accès</strong> — consulter toutes vos données depuis votre profil</li>
+          <li><strong>Rectification</strong> — modifier vos informations depuis les paramètres du profil</li>
+          <li><strong>Suppression</strong> — supprimer votre compte depuis la section "Zone de danger" du profil</li>
+          <li><strong>Portabilité</strong> — contacter-nous pour obtenir une copie de vos données</li>
+        </ul>
+      </section>
+
+      <section class="privacy-section">
+        <h2 class="privacy-section__title">8. Contact</h2>
+        <p>Pour toute question relative à vos données personnelles :</p>
+        <p><strong>Dujardin Delacour & Cie</strong><br>
+        16 rue Dr Raharinosy, Andohalo, Immeuble MYE — 2ème étage<br>
+        Antananarivo 101, Madagascar<br>
+        <a href="mailto:mathilde.lebon@dujardin-delacour.com" class="privacy-link">mathilde.lebon&#64;dujardin-delacour.com</a></p>
+      </section>
+
+    } @else {
+
+      <p class="privacy-updated">Last updated: May 2026</p>
+
+      <section class="privacy-section">
+        <h2 class="privacy-section__title">1. Who are we?</h2>
+        <p>Dujardin Delacour & Cie is a financial and legal advisory firm located at 16 rue Dr Raharinosy, Andohalo — Antananarivo 101, Madagascar. By using this site, you agree to these terms.</p>
+      </section>
+
+      <section class="privacy-section">
+        <h2 class="privacy-section__title">2. Data we collect</h2>
+        <p>When creating an account, we collect:</p>
+        <ul class="privacy-list">
+          <li>Last name and first name(s)</li>
+          <li>Date of birth</li>
+          <li>Email address</li>
+          <li>Username</li>
+        </ul>
+        <p>These fields are optional and can be filled in from your profile:</p>
+        <ul class="privacy-list">
+          <li>Phone number</li>
+          <li>Country and city of residence</li>
+          <li>Gender</li>
+          <li>Profile photo (avatar)</li>
+        </ul>
+        <p>The contact form collects: name, email address and message content.</p>
+      </section>
+
+      <section class="privacy-section">
+        <h2 class="privacy-section__title">3. Purpose of processing</h2>
+        <ul class="privacy-list">
+          <li><strong>Account management</strong> — authentication, experience personalisation</li>
+          <li><strong>Communication</strong> — responding to messages sent via the contact form</li>
+          <li><strong>Security</strong> — protecting your account through password encryption (bcrypt)</li>
+          <li><strong>Service improvement</strong> — internal analysis of site functionality</li>
+        </ul>
+      </section>
+
+      <section class="privacy-section">
+        <h2 class="privacy-section__title">4. Cookies &amp; local storage</h2>
+        <p>Our site does not use third-party cookies for advertising or tracking purposes. We use only the browser's local storage (localStorage) for:</p>
+        <ul class="privacy-list">
+          <li><strong>Session token (JWT)</strong> — valid for 7 days, deleted on logout</li>
+          <li><strong>Language preference</strong> — FR or EN, persisted between visits</li>
+          <li><strong>Cookie consent</strong> — remembers your acceptance</li>
+          <li><strong>Activity timestamp</strong> — enables automatic logout after 5 hours of inactivity</li>
+        </ul>
+      </section>
+
+      <section class="privacy-section">
+        <h2 class="privacy-section__title">5. Data retention</h2>
+        <p>Your data is retained as long as your account is active. If you delete your account, a <strong>7-day</strong> window is provided to cancel the deletion. After this period, the account is permanently deactivated.</p>
+      </section>
+
+      <section class="privacy-section">
+        <h2 class="privacy-section__title">6. Security</h2>
+        <p>Passwords are encrypted using the bcrypt algorithm (cost factor 12) and are never stored in plain text. Communications between your browser and our server are encrypted (HTTPS).</p>
+      </section>
+
+      <section class="privacy-section">
+        <h2 class="privacy-section__title">7. Your rights</h2>
+        <p>Under applicable data protection laws, you have the following rights:</p>
+        <ul class="privacy-list">
+          <li><strong>Access</strong> — view all your data from your profile</li>
+          <li><strong>Rectification</strong> — update your information from the profile settings</li>
+          <li><strong>Deletion</strong> — delete your account from the "Danger Zone" section of your profile</li>
+          <li><strong>Portability</strong> — contact us to obtain a copy of your data</li>
+        </ul>
+      </section>
+
+      <section class="privacy-section">
+        <h2 class="privacy-section__title">8. Contact</h2>
+        <p>For any questions regarding your personal data:</p>
+        <p><strong>Dujardin Delacour & Cie</strong><br>
+        16 rue Dr Raharinosy, Andohalo, MYE Building — 2nd floor<br>
+        Antananarivo 101, Madagascar<br>
+        <a href="mailto:mathilde.lebon@dujardin-delacour.com" class="privacy-link">mathilde.lebon&#64;dujardin-delacour.com</a></p>
+      </section>
+
+    }
+
+  </div>
+</div>

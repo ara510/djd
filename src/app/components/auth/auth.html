@@ -217,9 +217,9 @@
           <input type="checkbox" name="acceptTerms" [(ngModel)]="signup.acceptTerms" />
           <span>
             {{ lang.t('auth.signup.terms') }}
-            <a href="#" class="auth-form__terms-link" (click)="$event.preventDefault()">{{ lang.t('auth.signup.terms.link1') }}</a>
+            <button type="button" class="auth-form__terms-link" (click)="privacy.open()">{{ lang.t('auth.signup.terms.link1') }}</button>
             {{ lang.t('auth.signup.terms.and') }}
-            <a href="#" class="auth-form__terms-link" (click)="$event.preventDefault()">{{ lang.t('auth.signup.terms.link2') }}</a>
+            <button type="button" class="auth-form__terms-link" (click)="privacy.open()">{{ lang.t('auth.signup.terms.link2') }}</button>
           </span>
         </label>
 

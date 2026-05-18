@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
 import { TranslationService } from '../../services/translation.service';
+import { PrivacyService } from '../../services/privacy.service';
 import lottie, { AnimationItem } from 'lottie-web';
 
 type Tab = 'login' | 'signup';
@@ -19,9 +20,10 @@ export class AuthComponent implements AfterViewInit, OnDestroy {
   @ViewChild('lottieContainer') lottieRef!: ElementRef<HTMLDivElement>;
   @ViewChild('authLoadingLottie') authLoadingRef!: ElementRef<HTMLDivElement>;
 
-  auth  = inject(AuthService);
-  toast = inject(ToastService);
-  lang  = inject(TranslationService);
+  auth    = inject(AuthService);
+  toast   = inject(ToastService);
+  lang    = inject(TranslationService);
+  privacy = inject(PrivacyService);
 
   closed = output<void>();
 

@@ -1,0 +1,32 @@
+<div class="cookie-overlay"></div>
+
+<div class="cookie-card">
+  <div class="cookie-card__icon">🍪</div>
+
+  <div class="cookie-card__body">
+    <h3 class="cookie-card__title">
+      {{ lang.lang() === 'fr' ? 'Votre vie privée nous tient à cœur' : 'Your privacy is important to us' }}
+    </h3>
+
+    <p class="cookie-card__desc">
+      @if (lang.lang() === 'fr') {
+        Nous utilisons des cookies et le stockage local pour assurer le bon fonctionnement du site,
+        gérer votre session et mémoriser vos préférences. Pour en savoir plus, consultez notre
+        <button class="cookie-card__link" type="button" (click)="openPrivacy()">Politique de confidentialité</button>.
+      } @else {
+        We use cookies and local storage to ensure the site works properly,
+        manage your session and remember your preferences. For more information, see our
+        <button class="cookie-card__link" type="button" (click)="openPrivacy()">Privacy Policy</button>.
+      }
+    </p>
+
+    <div class="cookie-card__actions">
+      <button class="cookie-card__btn cookie-card__btn--outline" type="button" (click)="openPrivacy()">
+        {{ lang.lang() === 'fr' ? 'En savoir plus' : 'More Options' }}
+      </button>
+      <button class="cookie-card__btn cookie-card__btn--accept" type="button" (click)="accept()">
+        {{ lang.lang() === 'fr' ? 'Accepter' : 'Accept' }}
+      </button>
+    </div>
+  </div>
+</div>

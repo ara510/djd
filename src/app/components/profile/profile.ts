@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
 import { TranslationService } from '../../services/translation.service';
+import { PrivacyService } from '../../services/privacy.service';
 import lottie, { AnimationItem } from 'lottie-web';
 
 @Component({
@@ -15,9 +16,10 @@ import lottie, { AnimationItem } from 'lottie-web';
 })
 export class ProfileComponent implements AfterViewInit, OnDestroy {
   @ViewChild('logoutLottie') logoutLottieRef!: ElementRef<HTMLDivElement>;
-  auth   = inject(AuthService);
-  toast  = inject(ToastService);
-  lang   = inject(TranslationService);
+  auth    = inject(AuthService);
+  toast   = inject(ToastService);
+  lang    = inject(TranslationService);
+  privacy = inject(PrivacyService);
   closed = output<void>();
 
   editing            = signal(false);

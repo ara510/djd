@@ -1,5 +1,8 @@
 import { Component, signal, inject, HostListener } from '@angular/core';
 import { AuthService } from './services/auth.service';
+import { PrivacyService } from './services/privacy.service';
+import { CookieBannerComponent } from './components/cookie-banner/cookie-banner';
+import { PrivacyModalComponent } from './components/privacy-modal/privacy-modal';
 import { NavbarComponent }   from './components/navbar/navbar';
 import { HeroComponent }     from './components/hero/hero';
 import { AboutComponent }    from './components/about/about';
@@ -25,6 +28,8 @@ import { ProfileComponent }  from './components/profile/profile';
     ToastComponent,
     AuthComponent,
     ProfileComponent,
+    CookieBannerComponent,
+    PrivacyModalComponent,
   ],
   template: `
     <app-navbar
@@ -49,13 +54,21 @@ import { ProfileComponent }  from './components/profile/profile';
     @if (showProfile()) {
       <app-profile (closed)="showProfile.set(false)"></app-profile>
     }
+    @if (showCookieBanner()) {
+      <app-cookie-banner (accepted)="showCookieBanner.set(false)"></app-cookie-banner>
+    }
+    @if (privacy.isOpen()) {
+      <app-privacy-modal></app-privacy-modal>
+    }
   `,
   styles: [``],
 })
 export class App {
   private auth = inject(AuthService);
-  showAuth    = signal(false);
-  showProfile = signal(false);
+  privacy      = inject(PrivacyService);
+  showAuth         = signal(false);
+  showProfile      = signal(false);
+  showCookieBanner = signal(!localStorage.getItem('djd_cookies'));
 
   @HostListener('document:mousemove')
   @HostListener('document:click')
