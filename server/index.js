@@ -33,6 +33,16 @@ db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS genre VARCHAR(30)`).catch((
 db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS notif_email BOOLEAN NOT NULL DEFAULT TRUE`).catch(() => {});
 db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE`).catch(() => {});
 db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_verified BOOLEAN NOT NULL DEFAULT FALSE`).catch(() => {});
+db.query(`
+  CREATE TABLE IF NOT EXISTS feedback (
+    id         SERIAL PRIMARY KEY,
+    user_id    INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    rating     SMALLINT CHECK (rating >= 1 AND rating <= 5),
+    category   VARCHAR(30),
+    comment    TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  )
+`).catch(() => {});
 
 // ─── JWT middleware ────────────────────────────────────────────────────────────
 function requireAuth(req, res, next) {
@@ -213,6 +223,24 @@ app.post('/api/auth/recover', requireAuth, async (req, res) => {
     res.json({ token, user });
   } catch (err) {
     console.error('Recover account error:', err);
+    res.status(500).json({ error: 'Erreur serveur.' });
+  }
+});
+
+// ─── POST /api/feedback ───────────────────────────────────────────────────────
+app.post('/api/feedback', requireAuth, async (req, res) => {
+  const { rating, category, comment } = req.body;
+  if (rating && (rating < 1 || rating > 5))
+    return res.status(400).json({ error: 'Note invalide.' });
+
+  try {
+    await db.query(
+      'INSERT INTO feedback (user_id, rating, category, comment) VALUES ($1, $2, $3, $4)',
+      [req.user.id, rating || null, category || null, comment?.trim() || null]
+    );
+    res.status(201).json({ success: true });
+  } catch (err) {
+    console.error('Feedback error:', err);
     res.status(500).json({ error: 'Erreur serveur.' });
   }
 });

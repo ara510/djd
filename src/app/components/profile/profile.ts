@@ -20,7 +20,8 @@ export class ProfileComponent implements AfterViewInit, OnDestroy {
   toast   = inject(ToastService);
   lang    = inject(TranslationService);
   privacy = inject(PrivacyService);
-  closed = output<void>();
+  closed       = output<void>();
+  openFeedback = output<void>();
 
   editing            = signal(false);
   loading            = signal(false);

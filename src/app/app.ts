@@ -3,6 +3,7 @@ import { AuthService } from './services/auth.service';
 import { PrivacyService } from './services/privacy.service';
 import { CookieBannerComponent } from './components/cookie-banner/cookie-banner';
 import { PrivacyModalComponent } from './components/privacy-modal/privacy-modal';
+import { FeedbackModalComponent } from './components/feedback-modal/feedback-modal';
 import { NavbarComponent }   from './components/navbar/navbar';
 import { HeroComponent }     from './components/hero/hero';
 import { AboutComponent }    from './components/about/about';
@@ -30,6 +31,7 @@ import { ProfileComponent }  from './components/profile/profile';
     ProfileComponent,
     CookieBannerComponent,
     PrivacyModalComponent,
+    FeedbackModalComponent,
   ],
   template: `
     <app-navbar
@@ -52,7 +54,10 @@ import { ProfileComponent }  from './components/profile/profile';
       <app-auth (closed)="showAuth.set(false)"></app-auth>
     }
     @if (showProfile()) {
-      <app-profile (closed)="showProfile.set(false)"></app-profile>
+      <app-profile (closed)="showProfile.set(false)" (openFeedback)="showFeedback.set(true)"></app-profile>
+    }
+    @if (showFeedback()) {
+      <app-feedback-modal (closed)="showFeedback.set(false)"></app-feedback-modal>
     }
     @if (showCookieBanner()) {
       <app-cookie-banner (accepted)="showCookieBanner.set(false)"></app-cookie-banner>
@@ -69,6 +74,7 @@ export class App {
   showAuth         = signal(false);
   showProfile      = signal(false);
   showCookieBanner = signal(false);
+  showFeedback     = signal(false);
 
   constructor() {
     if (!localStorage.getItem('djd_cookies'))
