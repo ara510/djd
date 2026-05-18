@@ -68,7 +68,12 @@ export class App {
   privacy      = inject(PrivacyService);
   showAuth         = signal(false);
   showProfile      = signal(false);
-  showCookieBanner = signal(!localStorage.getItem('djd_cookies'));
+  showCookieBanner = signal(false);
+
+  constructor() {
+    if (!localStorage.getItem('djd_cookies'))
+      setTimeout(() => this.showCookieBanner.set(true), 3000);
+  }
 
   @HostListener('document:mousemove')
   @HostListener('document:click')
