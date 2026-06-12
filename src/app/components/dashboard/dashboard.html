@@ -1,0 +1,839 @@
+<div class="dash" [class.dash--out]="closing()">
+
+  <!-- ── Header ── -->
+  <header class="dash__header">
+    <div class="dash__brand">
+      <img src="DJD.png" alt="DJD" class="dash__logo" />
+      <div class="dash__titles">
+        <span class="dash__title">{{ fr ? 'Veille' : 'Watch' }}</span>
+        <span class="dash__subtitle">{{ fr ? 'Revue de presse & veille média' : 'Press review & media watch' }}</span>
+      </div>
+    </div>
+
+    @if (view() === 'veille') {
+      <div class="dash__search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input class="dash__search-input" type="text" [(ngModel)]="search"
+               (keyup.enter)="applySearch()" (search)="applySearch()"
+               [placeholder]="fr ? 'Rechercher une veille…' : 'Search…'" />
+      </div>
+    }
+
+    <div class="dash__actions">
+      <span class="dash__plan" [attr.data-plan]="plan">
+        @if (isAdmin) { {{ fr ? 'Admin DJD' : 'DJD Admin' }} } @else { {{ planLabel }} }
+      </span>
+      @if (isAdmin && view() === 'veille') {
+        <button class="dash__add" type="button" (click)="openNew()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          {{ fr ? 'Ajouter' : 'Add' }}
+        </button>
+      }
+      <button class="dash__close" type="button" (click)="close()" [attr.aria-label]="fr ? 'Fermer' : 'Close'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ── Body ── -->
+  <div class="dash__body">
+
+    <!-- Sidebar -->
+    <aside class="dash__sidebar">
+
+      @if (isAdmin) {
+        <p class="dash__sidebar-label">{{ fr ? 'Administration' : 'Administration' }}</p>
+        <button class="dash__filter" [class.dash__filter--active]="view() === 'veille'" (click)="setView('veille')" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg>
+          {{ fr ? 'Veille' : 'Watch' }}
+        </button>
+        <button class="dash__filter" [class.dash__filter--active]="view() === 'feedback'" (click)="setView('feedback')" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          {{ fr ? 'Retours d\'expérience' : 'Feedback' }}
+        </button>
+        <button class="dash__filter" [class.dash__filter--active]="view() === 'users'" (click)="setView('users')" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          {{ fr ? 'Utilisateurs' : 'Users' }}
+        </button>
+        <button class="dash__filter" [class.dash__filter--active]="view() === 'stats'" (click)="setView('stats')" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          {{ fr ? 'Statistiques' : 'Statistics' }}
+        </button>
+        <button class="dash__filter" [class.dash__filter--active]="view() === 'activity'" (click)="setView('activity')" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          {{ fr ? 'Journal' : 'Activity log' }}
+        </button>
+        <button class="dash__filter" [class.dash__filter--active]="view() === 'trash'" (click)="setView('trash')" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          {{ fr ? 'Corbeille' : 'Trash' }}
+        </button>
+      }
+
+      @if (view() === 'veille') {
+        <button class="dash__filter" [class.dash__filter--active]="!activeType() && !activeSector() && readingFilter() === 'all'" (click)="selectType(null); selectSector(null); setReadingFilter('all')" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          {{ fr ? 'Tout' : 'All' }}
+        </button>
+        <button class="dash__filter" [class.dash__filter--active]="readingFilter() === 'unread'" (click)="setReadingFilter('unread')" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg>
+          {{ fr ? 'Non lus' : 'Unread' }}
+          @if (unreadCount) { <span class="dash__count">{{ unreadCount }}</span> }
+        </button>
+        <button class="dash__filter" [class.dash__filter--active]="readingFilter() === 'favorites'" (click)="setReadingFilter('favorites')" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          {{ fr ? 'Favoris' : 'Favorites' }}
+          @if (favoritesCount) { <span class="dash__count">{{ favoritesCount }}</span> }
+        </button>
+
+        <p class="dash__sidebar-label">{{ fr ? 'Période' : 'Date range' }}</p>
+        <div class="dash__period">
+          <label class="dash__period-row">
+            <span>{{ fr ? 'Du' : 'From' }}</span>
+            <input type="date" [ngModel]="dateFrom()" (ngModelChange)="setDateFrom($event)" />
+          </label>
+          <label class="dash__period-row">
+            <span>{{ fr ? 'Au' : 'To' }}</span>
+            <input type="date" [ngModel]="dateTo()" (ngModelChange)="setDateTo($event)" />
+          </label>
+          @if (hasDateFilter) {
+            <button type="button" class="dash__period-reset" (click)="resetDateFilter()">
+              {{ fr ? 'Réinitialiser' : 'Reset' }}
+            </button>
+          }
+        </div>
+
+        <p class="dash__sidebar-label">{{ fr ? 'Sources' : 'Sources' }}</p>
+        @for (t of sourceTypes; track t.value) {
+          <button class="dash__filter" [class.dash__filter--active]="activeType() === t.value" (click)="selectType(t.value)" type="button">
+            <span class="dash__dot" [attr.data-type]="t.value"></span>
+            {{ fr ? t.fr : t.en }}
+          </button>
+        }
+
+        <p class="dash__sidebar-label">{{ fr ? 'Secteurs' : 'Sectors' }}</p>
+        @for (s of sectors; track s.value) {
+          @if (canAccessSector(s.value)) {
+            <button class="dash__filter dash__filter--sector" [class.dash__filter--active]="activeSector() === s.value" (click)="selectSector(s.value)" type="button">
+              {{ fr ? s.fr : s.en }}
+            </button>
+          } @else {
+            <button class="dash__filter dash__filter--sector dash__filter--locked" (click)="onLockedSector(s.value)" type="button" [attr.title]="sectorRequiredPlan(s.value)">
+              {{ fr ? s.fr : s.en }}
+              <svg class="dash__lock" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </button>
+          }
+        }
+      }
+    </aside>
+
+    <!-- Feed -->
+    <main class="dash__feed">
+      @if (view() === 'feedback') {
+        <!-- ── Vue Retours d'expérience (admin) ── -->
+        @if (admin.feedbackLoading()) {
+          <p class="dash__state">{{ fr ? 'Chargement…' : 'Loading…' }}</p>
+        } @else {
+          <div class="fb-summary">
+            <div class="fb-summary__score">
+              <span class="fb-summary__avg">{{ fbAvg || '—' }}</span>
+              <span class="fb-summary__stars">
+                @for (n of fbStars; track n) {
+                  <svg width="16" height="16" viewBox="0 0 24 24" [attr.fill]="n <= fbAvg ? '#e8a838' : 'none'" stroke="#e8a838" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                }
+              </span>
+              <span class="fb-summary__count">
+                {{ fbRatedCount }} {{ fr ? 'note(s)' : 'rating(s)' }} · {{ admin.feedback().length }} {{ fr ? 'retour(s)' : 'feedback' }}
+              </span>
+            </div>
+          </div>
+
+          @if (admin.feedback().length === 0) {
+            <div class="dash__empty">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink-muted)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <p>{{ fr ? 'Aucun retour d\'expérience pour le moment.' : 'No feedback yet.' }}</p>
+            </div>
+          } @else {
+            <div class="fb-list">
+              @for (f of admin.feedback(); track f.id) {
+                <article class="fb-item">
+                  <div class="fb-item__head">
+                    @if (f.rating) {
+                      <span class="fb-item__stars">
+                        @for (n of fbStars; track n) {
+                          <svg width="14" height="14" viewBox="0 0 24 24" [attr.fill]="n <= f.rating ? '#e8a838' : 'none'" stroke="#e8a838" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        }
+                      </span>
+                    }
+                    @if (f.category) { <span class="fb-item__cat" [attr.data-cat]="f.category">{{ fbCategoryLabel(f.category) }}</span> }
+                    <span class="fb-item__date">{{ f.created_at | date:'dd/MM/yy' }}</span>
+                  </div>
+                  @if (f.comment) { <p class="fb-item__comment">{{ f.comment }}</p> }
+                  <p class="fb-item__author">{{ fbAuthor(f) }}@if (f.prenoms || f.nom) { <span class="fb-item__name"> — {{ f.prenoms }} {{ f.nom }}</span> }</p>
+                </article>
+              }
+            </div>
+          }
+        }
+      } @else if (view() === 'stats') {
+        <!-- ── Vue Statistiques (admin) ── -->
+        @if (admin.statsLoading() || !admin.stats()) {
+          <p class="dash__state">{{ fr ? 'Chargement…' : 'Loading…' }}</p>
+        } @else {
+          @let s = admin.stats()!;
+          <div class="stats-tiles">
+            <div class="stat-tile"><span class="stat-tile__num">{{ s.veille.total }}</span><span class="stat-tile__lbl">{{ fr ? 'Veilles' : 'Watch items' }}</span></div>
+            <div class="stat-tile"><span class="stat-tile__num">{{ s.veille.published }}</span><span class="stat-tile__lbl">{{ fr ? 'Publiées' : 'Published' }}</span></div>
+            <div class="stat-tile stat-tile--muted"><span class="stat-tile__num">{{ s.veille.draft }}</span><span class="stat-tile__lbl">{{ fr ? 'Brouillons' : 'Drafts' }}</span></div>
+            <div class="stat-tile"><span class="stat-tile__num">{{ s.users.total - s.users.admins }}</span><span class="stat-tile__lbl">{{ fr ? 'Abonnés' : 'Subscribers' }}</span></div>
+            <div class="stat-tile stat-tile--accent"><span class="stat-tile__num">{{ s.feedback.avg || '—' }}</span><span class="stat-tile__lbl">{{ fr ? 'Note moyenne' : 'Avg rating' }}</span></div>
+          </div>
+
+          <div class="stats-cols">
+            <div class="stat-block">
+              <h4 class="stat-block__title">{{ fr ? 'Abonnés par offre' : 'Subscribers by plan' }}</h4>
+              @for (p of s.users.byPlan; track p.plan) {
+                <div class="stat-bar">
+                  <span class="stat-bar__label">{{ lang.t('sub.' + p.plan + '.short') }}</span>
+                  <span class="stat-bar__track"><span class="stat-bar__fill" [style.width.%]="barPct(p.count, s.users.byPlan)"></span></span>
+                  <span class="stat-bar__val">{{ p.count }}</span>
+                </div>
+              }
+            </div>
+
+            <div class="stat-block">
+              <h4 class="stat-block__title">{{ fr ? 'Veilles par secteur' : 'Watch items by sector' }}</h4>
+              @if (s.veille.bySector.length === 0) { <p class="stat-block__empty">—</p> }
+              @for (sec of s.veille.bySector; track sec.sector) {
+                <div class="stat-bar">
+                  <span class="stat-bar__label">{{ sectorLabel(sec.sector) }}</span>
+                  <span class="stat-bar__track"><span class="stat-bar__fill" [style.width.%]="barPct(sec.count, s.veille.bySector)"></span></span>
+                  <span class="stat-bar__val">{{ sec.count }}</span>
+                </div>
+              }
+            </div>
+
+            <div class="stat-block">
+              <h4 class="stat-block__title">{{ fr ? 'Veilles par source' : 'Watch items by source' }}</h4>
+              @for (t of s.veille.byType; track t.source_type) {
+                <div class="stat-bar">
+                  <span class="stat-bar__label">{{ typeLabel(t.source_type) }}</span>
+                  <span class="stat-bar__track"><span class="stat-bar__fill" [style.width.%]="barPct(t.count, s.veille.byType)"></span></span>
+                  <span class="stat-bar__val">{{ t.count }}</span>
+                </div>
+              }
+            </div>
+
+            <div class="stat-block">
+              <h4 class="stat-block__title">{{ fr ? 'Veilles par mois' : 'Watch items by month' }}</h4>
+              @if (s.veille.byMonth.length === 0) { <p class="stat-block__empty">—</p> }
+              @for (m of s.veille.byMonth; track m.month) {
+                <div class="stat-bar">
+                  <span class="stat-bar__label">{{ monthLabel(m.month) }}</span>
+                  <span class="stat-bar__track"><span class="stat-bar__fill" [style.width.%]="barPct(m.count, s.veille.byMonth)"></span></span>
+                  <span class="stat-bar__val">{{ m.count }}</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <p class="stats-note">
+            {{ fr
+              ? s.users.verified + ' compte(s) vérifié(s) · ' + s.users.disabled + ' désactivé(s) · ' + s.users.admins + ' admin(s) · ' + s.feedback.total + ' retour(s)'
+              : s.users.verified + ' verified · ' + s.users.disabled + ' disabled · ' + s.users.admins + ' admin(s) · ' + s.feedback.total + ' feedback' }}
+          </p>
+        }
+      } @else if (view() === 'trash') {
+        <!-- ── Vue Corbeille (admin) ── -->
+        @if (veille.trashLoading()) {
+          <p class="dash__state">{{ fr ? 'Chargement…' : 'Loading…' }}</p>
+        } @else if (veille.trash().length === 0) {
+          <div class="dash__empty">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink-muted)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+            <p>{{ fr ? 'La corbeille est vide.' : 'Trash is empty.' }}</p>
+          </div>
+        } @else {
+          <p class="trash-note">{{ fr ? 'Les veilles supprimées sont conservées 15 jours avant suppression définitive.' : 'Deleted items are kept for 15 days before permanent deletion.' }}</p>
+          <div class="trash-list">
+            @for (item of veille.trash(); track item.id) {
+              <div class="trash-row">
+                <span class="dash-card__type" [attr.data-type]="item.source_type" [attr.data-net]="item.source_type === 'social' ? item.social_network : null">
+                  <span class="dash-card__type-icon"><app-veille-icon [type]="item.source_type" [network]="item.source_type === 'social' ? item.social_network : null"></app-veille-icon></span>
+                  {{ item.source_type === 'social' && item.social_network ? networkLabel(item.social_network) : typeLabel(item.source_type) }}
+                </span>
+                <div class="trash-row__body">
+                  <span class="trash-row__title">{{ cardHeading(item) }}</span>
+                  <span class="trash-row__meta">
+                    {{ fr ? 'Supprimée le' : 'Deleted on' }} {{ item.deleted_at | date:'dd/MM/yy' }}
+                    · <span [class.trash-row__exp]="trashDaysLeft(item) <= 3">{{ fr ? 'expire dans' : 'expires in' }} {{ trashDaysLeft(item) }} {{ fr ? 'j' : 'd' }}</span>
+                  </span>
+                </div>
+                <div class="trash-row__actions">
+                  <button class="trash-row__btn" type="button" (click)="restoreVeille(item)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><polyline points="3 3 3 8 8 8"/></svg>
+                    {{ fr ? 'Restaurer' : 'Restore' }}
+                  </button>
+                  <button class="trash-row__btn trash-row__btn--danger" type="button" (click)="confirmPurge(item)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                    {{ fr ? 'Supprimer' : 'Delete' }}
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      } @else if (view() === 'activity') {
+        <!-- ── Vue Journal d'activité (admin) ── -->
+        @if (admin.activityLoading()) {
+          <p class="dash__state">{{ fr ? 'Chargement…' : 'Loading…' }}</p>
+        } @else if (admin.activity().length === 0) {
+          <div class="dash__empty">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink-muted)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <p>{{ fr ? 'Aucune activité enregistrée.' : 'No activity recorded yet.' }}</p>
+          </div>
+        } @else {
+          <div class="log-list">
+            @for (e of admin.activity(); track e.id) {
+              <div class="log-row">
+                <span class="log-row__dot" [attr.data-cat]="actionCat(e.action)"></span>
+                <div class="log-row__body">
+                  <p class="log-row__text">
+                    <span class="log-row__actor">{{ e.actor_name || (fr ? 'Système' : 'System') }}</span>
+                    {{ actionLabel(e.action) }}@if (e.target) { <span class="log-row__target"> — {{ e.target }}</span> }
+                  </p>
+                </div>
+                <span class="log-row__time">{{ e.created_at | date:'dd/MM/yy HH:mm' }}</span>
+              </div>
+            }
+          </div>
+        }
+      } @else if (view() === 'users') {
+        <!-- ── Vue Utilisateurs (admin) ── -->
+        @if (admin.usersLoading()) {
+          <p class="dash__state">{{ fr ? 'Chargement…' : 'Loading…' }}</p>
+        } @else {
+          <!-- Ligne réutilisable -->
+          <ng-template #userRowTpl let-u>
+            <div class="user-row" [class.user-row--deleted]="u.deleted_at" [class.user-row--disabled]="u.disabled">
+              <div class="user-row__avatar" [class.user-row__avatar--img]="u.avatar">
+                @if (u.avatar) { <img [src]="u.avatar" [alt]="u.username" /> } @else { {{ userInitials(u) }} }
+              </div>
+              <div class="user-row__id">
+                <span class="user-row__name">{{ u.prenoms }} {{ u.nom }}</span>
+                <span class="user-row__handle">&#64;{{ u.username }}</span>
+              </div>
+              <div class="user-row__contact">
+                <span class="user-row__email">{{ u.email }}</span>
+                <span class="user-row__badges">
+                  @if (u.email_verified) {
+                    <span class="user-row__chip user-row__chip--ok">{{ fr ? 'Vérifié' : 'Verified' }}</span>
+                  } @else {
+                    <span class="user-row__chip user-row__chip--no">{{ fr ? 'Non vérifié' : 'Unverified' }}</span>
+                  }
+                  @if (u.disabled)   { <span class="user-row__chip user-row__chip--off">{{ fr ? 'Désactivé' : 'Disabled' }}</span> }
+                  @if (u.deleted_at) { <span class="user-row__chip user-row__chip--del">{{ fr ? 'Suppression' : 'Deletion' }}</span> }
+                </span>
+              </div>
+              <div class="user-row__plan">
+                @if (u.is_admin) {
+                  <span class="user-row__admin-badge">{{ fr ? 'Admin DJD' : 'DJD Admin' }}</span>
+                } @else {
+                  <select class="user-row__select" [value]="u.plan" (change)="changeUserPlan(u, selectValue($event))"
+                          [attr.data-plan]="u.plan">
+                    @for (p of planValues; track p) {
+                      <option [value]="p">{{ lang.t('sub.' + p + '.name') }}</option>
+                    }
+                  </select>
+                }
+              </div>
+              <span class="user-row__date">{{ u.created_at | date:'dd/MM/yy' }}</span>
+              <div class="user-row__actions">
+                @if (!u.is_admin) {
+                  <button class="user-row__toggle" [class.user-row__toggle--on]="u.disabled" type="button" (click)="toggleDisabled(u)">
+                    {{ u.disabled ? (fr ? 'Réactiver' : 'Enable') : (fr ? 'Désactiver' : 'Disable') }}
+                  </button>
+                }
+              </div>
+            </div>
+          </ng-template>
+
+          <p class="users-count">{{ admin.users().length }} {{ fr ? 'compte(s)' : 'account(s)' }}</p>
+
+          <!-- En-tête de colonnes -->
+          <div class="user-row user-row--head">
+            <span class="user-row__head-spacer"></span>
+            <span class="user-row__id">{{ fr ? 'Utilisateur' : 'User' }}</span>
+            <span class="user-row__contact">{{ fr ? 'Email & statut' : 'Email & status' }}</span>
+            <span class="user-row__plan">{{ fr ? 'Abonnement' : 'Plan' }}</span>
+            <span class="user-row__date">{{ fr ? 'Inscription' : 'Joined' }}</span>
+            <span class="user-row__actions"></span>
+          </div>
+
+          @if (adminUsers.length) {
+            <p class="users-section">{{ fr ? 'Administrateurs (DJD)' : 'Administrators (DJD)' }}</p>
+            <div class="users-list">
+              @for (u of adminUsers; track u.id) {
+                <ng-container *ngTemplateOutlet="userRowTpl; context: { $implicit: u }"></ng-container>
+              }
+            </div>
+          }
+
+          <p class="users-section">{{ fr ? 'Utilisateurs (abonnés)' : 'Users (subscribers)' }}</p>
+          @if (normalUsers.length) {
+            <div class="users-list">
+              @for (u of normalUsers; track u.id) {
+                <ng-container *ngTemplateOutlet="userRowTpl; context: { $implicit: u }"></ng-container>
+              }
+            </div>
+          } @else {
+            <p class="dash__state">{{ fr ? 'Aucun abonné pour le moment.' : 'No subscribers yet.' }}</p>
+          }
+        }
+      } @else if (veille.loading()) {
+        <p class="dash__state">{{ fr ? 'Chargement…' : 'Loading…' }}</p>
+      } @else if (displayedVeille.length === 0) {
+        <div class="dash__empty">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink-muted)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+          </svg>
+          <p>{{ readingFilter() === 'favorites'
+              ? (fr ? 'Aucune veille en favori.' : 'No favorites yet.')
+              : readingFilter() === 'unread'
+                ? (fr ? 'Tout est lu — aucune veille non lue.' : 'All caught up — nothing unread.')
+                : (isAdmin
+                    ? (fr ? 'Aucune veille. Cliquez sur « Ajouter » pour commencer.' : 'No items yet. Click “Add” to start.')
+                    : (fr ? 'Aucune veille pour le moment.' : 'No watch items yet.')) }}</p>
+        </div>
+      } @else {
+        <div class="dash__grid">
+          @for (item of displayedVeille; track item.id) {
+            <article class="dash-card dash-card--clickable" [class.dash-card--draft]="item.status === 'draft'" [class.dash-card--unread]="!item.read" [class.dash-card--pinned]="item.pinned" (click)="openDetail(item)">
+              @if (item.status === 'draft') {
+                <span class="dash-card__draft">{{ fr ? 'Brouillon' : 'Draft' }}</span>
+              }
+              <button class="dash-card__fav" [class.dash-card__fav--on]="item.favorite" type="button"
+                      (click)="toggleFavorite(item, $event)"
+                      [attr.aria-label]="item.favorite ? (fr ? 'Retirer des favoris' : 'Remove favorite') : (fr ? 'Ajouter aux favoris' : 'Add favorite')">
+                <svg width="15" height="15" viewBox="0 0 24 24" [attr.fill]="item.favorite ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+              </button>
+              @if (item.image) {
+                <div class="dash-card__media">
+                  <img [src]="item.image" [alt]="cardHeading(item)" loading="lazy" />
+                  @if ((item.images_count ?? 0) > 1) {
+                    <span class="dash-card__imgcount">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                      {{ item.images_count }}
+                    </span>
+                  }
+                </div>
+              }
+              <div class="dash-card__body">
+                <div class="dash-card__meta">
+                  @if (!item.read) { <span class="dash-card__unread-dot" [attr.title]="fr ? 'Non lu' : 'Unread'"></span> }
+                  @if (item.pinned) {
+                    <span class="dash-card__pin" [attr.title]="fr ? 'Épinglée' : 'Pinned'">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M16 3l5 5-4 1-3 3-1 5-2-2-4 4-1-1 4-4-2-2 5-1 3-3z"/></svg>
+                    </span>
+                  }
+                  @for (t of typesOf(item); track t) {
+                    <span class="dash-card__type"
+                          [attr.data-type]="t"
+                          [attr.data-net]="t === 'social' ? item.social_network : null">
+                      <span class="dash-card__type-icon">
+                        <app-veille-icon [type]="t" [network]="t === 'social' ? item.social_network : null"></app-veille-icon>
+                      </span>
+                      {{ t === 'social' && item.social_network ? networkLabel(item.social_network) : typeLabel(t) }}
+                    </span>
+                  }
+                  @if (showSectorChip(item)) {
+                    <span class="dash-card__sector">{{ sectorLabel(item.sector) }}</span>
+                  }
+                  @if (item.has_video) {
+                    <span class="dash-card__video-chip" [attr.title]="fr ? 'Contient une vidéo' : 'Has a video'">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    </span>
+                  }
+                  @if (item.scheduled) {
+                    <span class="dash-card__sched">{{ fr ? 'Programmée' : 'Scheduled' }}</span>
+                  }
+                  <span class="dash-card__date">{{ item.published_at | date:'dd/MM/yy' }}</span>
+                </div>
+                <h3 class="dash-card__title">{{ cardHeading(item) }}</h3>
+                @if (item.sector && item.source) { <p class="dash-card__source">{{ item.source }}</p> }
+                @if (item.author) { <p class="dash-card__author">{{ fr ? 'Par' : 'By' }} {{ item.author }}</p> }
+                @if (item.excerpt) { <p class="dash-card__excerpt">{{ item.excerpt }}</p> }
+                <div class="dash-card__foot">
+                  @if (item.url) {
+                    <a class="dash-card__link" [href]="item.url" target="_blank" rel="noopener" (click)="$event.stopPropagation()">
+                      {{ fr ? 'Lire la source' : 'Read source' }}
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
+                    </a>
+                  }
+                  @if (isAdmin) {
+                    <span class="dash-card__admin">
+                      <button type="button" [class.dash-card__admin-on]="item.pinned" (click)="togglePin(item, $event)" [attr.aria-label]="item.pinned ? (fr ? 'Désépingler' : 'Unpin') : (fr ? 'Épingler' : 'Pin')">
+                        <svg width="13" height="13" viewBox="0 0 24 24" [attr.fill]="item.pinned ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3l5 5-4 1-3 3-1 5-2-2-4 4-1-1 4-4-2-2 5-1 3-3z"/></svg>
+                      </button>
+                      <button type="button" (click)="$event.stopPropagation(); openEdit(item)" [attr.aria-label]="fr ? 'Modifier' : 'Edit'">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </button>
+                      <button type="button" (click)="duplicateVeille(item, $event)" [attr.aria-label]="fr ? 'Dupliquer' : 'Duplicate'">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      </button>
+                      <button type="button" (click)="$event.stopPropagation(); confirmDelete(item)" [attr.aria-label]="fr ? 'Supprimer' : 'Delete'">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                      </button>
+                    </span>
+                  }
+                </div>
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </main>
+  </div>
+
+  <!-- ── Éditeur (admin) ── -->
+  @if (showEditor()) {
+    <div class="dash-editor-overlay" (click)="closeEditor()"></div>
+    <div class="dash-editor">
+      <div class="dash-editor__header">
+        <span class="dash-editor__title">{{ editingId() ? (fr ? 'Modifier la veille' : 'Edit watch item') : (fr ? 'Nouvelle veille' : 'New watch item') }}</span>
+        <button class="dash-editor__close" type="button" (click)="closeEditor()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="dash-editor__body">
+        <div class="dash-status">
+          <button type="button" class="dash-status__btn" [class.dash-status__btn--active]="form.status === 'draft'" (click)="form.status = 'draft'">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            {{ fr ? 'Brouillon' : 'Draft' }}
+          </button>
+          <button type="button" class="dash-status__btn dash-status__btn--pub" [class.dash-status__btn--active]="form.status === 'published'" (click)="form.status = 'published'">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            {{ fr ? 'Publié' : 'Published' }}
+          </button>
+        </div>
+
+        <label class="dash-pin-toggle">
+          <input type="checkbox" [(ngModel)]="form.pinned" />
+          <svg width="14" height="14" viewBox="0 0 24 24" [attr.fill]="form.pinned ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3l5 5-4 1-3 3-1 5-2-2-4 4-1-1 4-4-2-2 5-1 3-3z"/></svg>
+          {{ fr ? 'Épingler en tête du feed' : 'Pin to top of feed' }}
+        </label>
+
+        <div class="dash-field">
+          <label class="dash-field__label">{{ fr ? 'Titre' : 'Title' }}</label>
+          <input class="dash-field__input" type="text" [(ngModel)]="form.title"
+                 [placeholder]="fr ? 'Titre de la veille (facultatif)' : 'Watch item title (optional)'" />
+        </div>
+
+        <div class="dash-field__row">
+          <div class="dash-field">
+            <label class="dash-field__label">{{ fr ? 'Types de source' : 'Source types' }} *</label>
+            <select class="dash-field__input" [ngModel]="''" (ngModelChange)="addSourceType($event)">
+              <option value="">— {{ fr ? 'Ajouter un type…' : 'Add a type…' }} —</option>
+              @for (t of sourceTypes; track t.value) {
+                @if (!hasSourceType(t.value)) { <option [value]="t.value">{{ fr ? t.fr : t.en }}</option> }
+              }
+            </select>
+            @if (form.source_types.length) {
+              <div class="dash-types">
+                @for (t of form.source_types; track t) {
+                  <span class="dash-type-chip">
+                    <span class="dash-type-chip__icon"><app-veille-icon [type]="t"></app-veille-icon></span>
+                    {{ typeLabel(t) }}
+                    <button type="button" class="dash-type-chip__x" (click)="removeSourceType(t)" [attr.aria-label]="fr ? 'Retirer' : 'Remove'">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                  </span>
+                }
+              </div>
+            }
+          </div>
+          <div class="dash-field">
+            <label class="dash-field__label">{{ fr ? 'Secteur' : 'Sector' }} *</label>
+            <select class="dash-field__input" [(ngModel)]="form.sector">
+              <option value="">— {{ fr ? 'Choisir' : 'Choose' }} —</option>
+              @for (g of sectorGroups; track g.label) {
+                <optgroup [label]="g.label">
+                  @for (s of g.options; track s.value) { <option [value]="s.value">{{ fr ? s.fr : s.en }}</option> }
+                </optgroup>
+              }
+            </select>
+          </div>
+        </div>
+
+        @if (hasSourceType('social')) {
+          <div class="dash-field">
+            <label class="dash-field__label">{{ fr ? 'Réseau social' : 'Social network' }}</label>
+            <div class="dash-net-picker">
+              @for (n of socialNetworks; track n.value) {
+                <button type="button" class="dash-net" [class.dash-net--active]="form.social_network === n.value"
+                        [attr.data-net]="n.value" (click)="form.social_network = n.value" [attr.title]="n.label">
+                  <app-veille-icon [network]="n.value"></app-veille-icon>
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        @if (hasSourceType('presse')) {
+          <div class="dash-field">
+            <label class="dash-field__label">{{ fr ? 'Auteur de l\'article' : 'Article author' }}</label>
+            <input class="dash-field__input" type="text" [(ngModel)]="form.author"
+                   [placeholder]="fr ? 'Ex. Jean Rakoto' : 'e.g. Jean Rakoto'" />
+          </div>
+        }
+
+        <div class="dash-field__row">
+          <div class="dash-field">
+            <label class="dash-field__label">{{ fr ? 'Comptes / Pages / Groupes' : 'Accounts / Pages / Groups' }}</label>
+            <input class="dash-field__input" type="text" [(ngModel)]="form.sourceDraft"
+                   (keydown.enter)="addSource(); $event.preventDefault()"
+                   [placeholder]="fr ? 'Saisir puis Entrée pour ajouter…' : 'Type then press Enter to add…'" />
+            @if (form.sources.length) {
+              <div class="dash-types">
+                @for (s of form.sources; track s) {
+                  <span class="dash-type-chip">
+                    {{ s }}
+                    <button type="button" class="dash-type-chip__x" (click)="removeSource(s)" [attr.aria-label]="fr ? 'Retirer' : 'Remove'">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                  </span>
+                }
+              </div>
+            }
+          </div>
+          <div class="dash-field">
+            <label class="dash-field__label">{{ fr ? 'Date de publication' : 'Publish date' }}</label>
+            <div class="dash-date">
+              <input class="dash-field__input" type="text" inputmode="numeric" maxlength="10"
+                     [(ngModel)]="dateDisplay" (blur)="parseDate()" (keydown.enter)="parseDate(); $event.preventDefault()"
+                     placeholder="jj/mm/aaaa" />
+              <button type="button" class="dash-date__cal" (click)="dateInput.showPicker()" [attr.aria-label]="fr ? 'Ouvrir le calendrier' : 'Open calendar'">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </button>
+              <input #dateInput class="dash-date__native" type="date" tabindex="-1"
+                     [ngModel]="form.published_at" (ngModelChange)="setDateFromPicker($event)" />
+            </div>
+            <span class="dash-field__hint">{{ fr ? 'Une date future programme la publication.' : 'A future date schedules publication.' }}</span>
+          </div>
+        </div>
+
+        <div class="dash-field">
+          <label class="dash-field__label">{{ fr ? 'Lien (URL)' : 'Link (URL)' }}</label>
+          <input class="dash-field__input" type="url" [(ngModel)]="form.url" placeholder="https://…" />
+        </div>
+
+        <div class="dash-field">
+          <label class="dash-field__label">{{ fr ? 'Images' : 'Images' }} <span class="dash-field__hint">({{ form.images.length }}/10)</span></label>
+          <input class="dash-field__input" type="url" [(ngModel)]="form.imageDraft"
+                 (keydown.enter)="addImageUrl(); $event.preventDefault()"
+                 [placeholder]="fr ? 'Coller une URL puis Entrée…' : 'Paste a URL then Enter…'" />
+          <div class="dash-upload">
+            <label class="dash-upload__btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              {{ fr ? 'Importer des images' : 'Upload images' }}
+              <input type="file" accept="image/*" multiple (change)="onImageFile($event)" hidden />
+            </label>
+            @if (uploading()) { <span class="dash-upload__status">{{ fr ? 'Envoi en cours…' : 'Uploading…' }}</span> }
+          </div>
+          @if (form.images.length) {
+            <div class="dash-imgs">
+              @for (img of form.images; track $index) {
+                <div class="dash-imgs__thumb">
+                  <img [src]="img" alt="" />
+                  @if ($index === 0) { <span class="dash-imgs__primary">{{ fr ? 'Une' : 'Cover' }}</span> }
+                  <button type="button" (click)="removeImage($index)" [attr.aria-label]="fr ? 'Retirer' : 'Remove'">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="dash-field">
+          <label class="dash-field__label">{{ fr ? 'Vidéo' : 'Video' }}</label>
+          @if (videoIsLocal()) {
+            <div class="dash-upload">
+              <span class="dash-video-chip">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                {{ fr ? 'Vidéo importée' : 'Video uploaded' }}
+                <button type="button" (click)="clearVideo()" [attr.aria-label]="fr ? 'Retirer' : 'Remove'">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </span>
+            </div>
+          } @else {
+            <input class="dash-field__input" type="url" [(ngModel)]="form.video"
+                   placeholder="https://youtube.com/…  ·  https://….mp4" />
+            <div class="dash-upload">
+              <label class="dash-upload__btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                {{ fr ? 'Importer une vidéo (max 30 Mo)' : 'Upload a video (max 30MB)' }}
+                <input type="file" accept="video/*" (change)="onVideoFile($event)" hidden />
+              </label>
+              @if (uploading()) { <span class="dash-upload__status">{{ fr ? 'Envoi en cours…' : 'Uploading…' }}</span> }
+            </div>
+            <span class="dash-field__hint">{{ fr ? 'Lien YouTube, fichier .mp4, ou import depuis votre ordinateur.' : 'YouTube link, .mp4 file, or upload from your computer.' }}</span>
+          }
+        </div>
+
+        <div class="dash-field">
+          <label class="dash-field__label">{{ fr ? 'Résumé' : 'Summary' }}</label>
+          <textarea class="dash-field__input dash-field__textarea" rows="7" [(ngModel)]="form.excerpt" (paste)="cleanPasteExcerpt($event)" [placeholder]="fr ? 'Résumé de la veille…' : 'Summary…'"></textarea>
+        </div>
+      </div>
+
+      <div class="dash-editor__foot">
+        <button class="dash-editor__cancel" type="button" (click)="closeEditor()">{{ fr ? 'Annuler' : 'Cancel' }}</button>
+        <button class="dash-editor__save" type="button" (click)="save()" [disabled]="saving() || !form.sector || !form.source_types.length">
+          {{ saving()
+            ? (fr ? 'Enregistrement…' : 'Saving…')
+            : (form.status === 'draft'
+                ? (fr ? 'Enregistrer le brouillon' : 'Save draft')
+                : (fr ? 'Publier' : 'Publish')) }}
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ── Vue détail (aperçu complet) ── -->
+  @if (selectedItem(); as item) {
+    <div class="dash-detail-overlay" (click)="closeDetail()"></div>
+    <div class="dash-detail">
+      <button class="dash-detail__close" type="button" (click)="closeDetail()" [attr.aria-label]="fr ? 'Fermer' : 'Close'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+
+      @if (item.video) {
+        <div class="dash-detail__video">
+          @if (youtubeId(item.video)) {
+            <iframe [src]="ytEmbed(item.video)" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+          } @else if (isDirectVideo(item.video) || item.video.startsWith('data:video') || item.video.includes('/uploads/')) {
+            <video [src]="item.video" controls preload="metadata"></video>
+          } @else {
+            <a class="dash-detail__link" [href]="item.video" target="_blank" rel="noopener">
+              {{ fr ? 'Voir la vidéo' : 'Watch video' }}
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
+            </a>
+          }
+        </div>
+      } @else if (item.has_video) {
+        <div class="dash-detail__video dash-detail__video--loading">{{ fr ? 'Chargement de la vidéo…' : 'Loading video…' }}</div>
+      }
+
+      @if (detailImages(item).length; as imgCount) {
+        <div class="dash-detail__media" (click)="openImage(detailImages(item)[galleryIndex()])" [attr.title]="fr ? 'Cliquer pour agrandir' : 'Click to enlarge'">
+          <img [src]="detailImages(item)[galleryIndex()]" [alt]="cardHeading(item)" />
+          <span class="dash-detail__hint">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+            {{ fr ? 'Cliquer pour agrandir' : 'Click to enlarge' }}
+          </span>
+          @if (imgCount > 1) {
+            <button class="dash-gallery__nav dash-gallery__nav--prev" type="button" (click)="$event.stopPropagation(); prevImage(item)" aria-label="‹">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <button class="dash-gallery__nav dash-gallery__nav--next" type="button" (click)="$event.stopPropagation(); nextImage(item)" aria-label="›">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <span class="dash-gallery__counter">{{ galleryIndex() + 1 }} / {{ imgCount }}</span>
+          }
+        </div>
+        @if (imgCount > 1) {
+          <div class="dash-gallery__dots">
+            @for (img of detailImages(item); track $index) {
+              <button class="dash-gallery__dot" [class.dash-gallery__dot--active]="$index === galleryIndex()" type="button" (click)="galleryIndex.set($index)" [attr.aria-label]="'Image ' + ($index + 1)"></button>
+            }
+          </div>
+        }
+      }
+
+      <div class="dash-detail__body">
+        <div class="dash-detail__meta">
+          @for (t of typesOf(item); track t) {
+            <span class="dash-card__type"
+                  [attr.data-type]="t"
+                  [attr.data-net]="t === 'social' ? item.social_network : null">
+              <span class="dash-card__type-icon">
+                <app-veille-icon [type]="t" [network]="t === 'social' ? item.social_network : null"></app-veille-icon>
+              </span>
+              {{ t === 'social' && item.social_network ? networkLabel(item.social_network) : typeLabel(t) }}
+            </span>
+          }
+          @if (showSectorChip(item)) { <span class="dash-card__sector">{{ sectorLabel(item.sector) }}</span> }
+          <span class="dash-card__date">{{ item.published_at | date:'dd/MM/yy' }}</span>
+        </div>
+
+        <h2 class="dash-detail__title">{{ cardHeading(item) }}</h2>
+        @if (item.source) {
+          <p class="dash-detail__source">
+            <span class="dash-detail__source-label">{{ fr ? 'Comptes / Pages / Groupes' : 'Accounts / Pages / Groups' }}</span>
+            {{ item.source }}
+          </p>
+        }
+        @if (item.author) {
+          <p class="dash-detail__source">
+            <span class="dash-detail__source-label">{{ fr ? 'Auteur' : 'Author' }}</span>
+            {{ item.author }}
+          </p>
+        }
+        @if (item.excerpt) { <p class="dash-detail__excerpt">{{ item.excerpt }}</p> }
+
+        <div class="dash-detail__foot">
+          <button class="dash-detail__fav" [class.dash-detail__fav--on]="item.favorite" type="button" (click)="toggleFavorite(item, $event)">
+            <svg width="14" height="14" viewBox="0 0 24 24" [attr.fill]="item.favorite ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            {{ item.favorite ? (fr ? 'En favori' : 'Favorited') : (fr ? 'Ajouter aux favoris' : 'Add to favorites') }}
+          </button>
+          @if (item.url) {
+            <a class="dash-detail__link" [href]="item.url" target="_blank" rel="noopener">
+              {{ fr ? 'Lire la source' : 'Read source' }}
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
+            </a>
+          }
+          @if (isAdmin) {
+            <span class="dash-detail__admin">
+              <button type="button" (click)="openEdit(item)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                {{ fr ? 'Modifier' : 'Edit' }}
+              </button>
+              <button type="button" (click)="duplicateVeille(item)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                {{ fr ? 'Dupliquer' : 'Duplicate' }}
+              </button>
+              <button type="button" class="dash-detail__delete" (click)="confirmDelete(item)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                {{ fr ? 'Supprimer' : 'Delete' }}
+              </button>
+            </span>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── Visionneuse image plein écran ── -->
+  @if (lightboxImage(); as src) {
+    <div class="dash-lightbox" (click)="closeImage()">
+      <button class="dash-lightbox__close" type="button" (click)="closeImage()" [attr.aria-label]="fr ? 'Fermer' : 'Close'">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <img class="dash-lightbox__img" [src]="src" alt="" (click)="$event.stopPropagation()" />
+    </div>
+  }
+
+</div>

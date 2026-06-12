@@ -4,6 +4,7 @@ import { TranslationService } from '../../services/translation.service';
 import { GalleryService }   from '../../services/gallery.service';
 import { GalleryComponent } from '../gallery/gallery';
 import { AuthService }      from '../../services/auth.service';
+import { VeilleService }    from '../../services/veille.service';
 
 interface NavLink { target: string; key: string; }
 
@@ -18,6 +19,7 @@ export class NavbarComponent implements OnInit {
   lang    = inject(TranslationService);
   gallery = inject(GalleryService);
   auth    = inject(AuthService);
+  veille  = inject(VeilleService);
 
   openAuth    = output<void>();
   openProfile = output<void>();

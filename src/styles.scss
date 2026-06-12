@@ -101,3 +101,25 @@ section {
 .reveal-delay-3 { transition-delay: 0.3s; }
 .reveal-delay-4 { transition-delay: 0.4s; }
 .reveal-delay-5 { transition-delay: 0.5s; }
+
+/* ─── Thème SweetAlert2 (DJD) ──────────────────────────────────────────────── */
+.swal2-popup.djd-swal,
+.swal2-popup.djd-toast {
+  font-family: var(--font-body);
+}
+.swal2-popup.djd-swal { border-radius: 10px; }
+.swal2-popup .swal2-title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  color: var(--color-ink);
+}
+.swal2-popup .swal2-html-container { color: var(--color-ink-muted); }
+.swal2-popup .swal2-confirm,
+.swal2-popup .swal2-cancel {
+  font-family: var(--font-body);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  box-shadow: none !important;
+}
+.swal2-toast .swal2-title { font-family: var(--font-body); font-size: 0.85rem; }

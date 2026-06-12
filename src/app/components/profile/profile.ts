@@ -31,17 +31,30 @@ export class ProfileComponent implements AfterViewInit, OnDestroy {
   showDeleteZone     = signal(false);
   showDeleteConfirm  = signal(false);
   showLogoutAnim     = signal(false);
+  otpSent           = signal(false);
+  showCurrentPwd    = signal(false);
+  showNewPwd        = signal(false);
+  showConfirmPwd    = signal(false);
   deletePassword     = '';
+  profileOtpCode     = '';
 
   private logoutAnim?: AnimationItem;
 
-  readonly currentPlan = 'free';
-
-  readonly plans = [
-    { id: 'free',    fr: 'Free',    en: 'Free',    current: true  },
-    { id: 'pro',     fr: 'Pro',     en: 'Pro',     current: false },
-    { id: 'premium', fr: 'Premium', en: 'Premium', current: false },
+  // ── Abonnements Veille ──────────────────────────────────────────────────────
+  // Devise et montants placeholder — à définir avec le client.
+  readonly CURRENCY = '€';
+  readonly plansInfo: { id: string; priceMonthly: number; free?: boolean; popular?: boolean }[] = [
+    { id: 'generale',    priceMonthly: 0,   free: true  },
+    { id: 'sectorielle', priceMonthly: 49,  popular: true },
+    { id: 'dediee',      priceMonthly: 149 },
   ];
+
+  get currentPlan() { return this.user?.plan ?? 'generale'; }
+
+  /** Prix affiché selon le mode de facturation (annuel = -20% sur 12 mois). */
+  displayPrice(monthly: number): number {
+    return this.billing() === 'yearly' ? Math.round(monthly * 12 * 0.8) : monthly;
+  }
 
   form = {
     nom: '', prenoms: '', email: '', username: '', date_naissance: '',
@@ -59,6 +72,8 @@ export class ProfileComponent implements AfterViewInit, OnDestroy {
   ];
 
   get user() { return this.auth.currentUser(); }
+
+  get isAdmin(): boolean { return !!this.user?.is_admin; }
 
   get initials(): string {
     const u = this.user;
@@ -137,6 +152,7 @@ export class ProfileComponent implements AfterViewInit, OnDestroy {
       return;
     }
     this.loading.set(true);
+    const emailChanged = this.form.email.trim().toLowerCase() !== (this.user?.email ?? '').toLowerCase();
     const payload: Record<string, unknown> = {
       nom:            this.form.nom,
       prenoms:        this.form.prenoms,
@@ -156,12 +172,17 @@ export class ProfileComponent implements AfterViewInit, OnDestroy {
     }
     this.auth.updateProfile(payload).subscribe({
       next: () => {
-        this.toast.show(
-          this.lang.lang() === 'fr' ? 'Profil mis à jour !' : 'Profile updated!',
-          'success'
-        );
         this.editing.set(false);
         this.loading.set(false);
+        if (emailChanged) {
+          // Nouvel email → non vérifié : on relance directement la confirmation.
+          this.sendVerificationEmail();
+        } else {
+          this.toast.show(
+            this.lang.lang() === 'fr' ? 'Profil mis à jour !' : 'Profile updated!',
+            'success'
+          );
+        }
       },
       error: (err) => {
         this.toast.show(err.error?.error || 'Erreur lors de la mise à jour.', 'error');
@@ -229,5 +250,39 @@ export class ProfileComponent implements AfterViewInit, OnDestroy {
       this.auth.logout();
       this.close();
     }, 1500);
+  }
+
+  sendVerificationEmail() {
+    this.auth.sendEmailOtp().subscribe({
+      next: () => {
+        this.otpSent.set(true);
+        this.profileOtpCode = '';
+        this.toast.show(
+          this.lang.lang() === 'fr' ? 'Code envoyé ! Vérifiez votre email.' : 'Code sent! Check your email.',
+          'success'
+        );
+      },
+      error: (err) => this.toast.show(err.error?.error || 'Erreur.', 'error'),
+    });
+  }
+
+  verifyEmailFromProfile() {
+    if (this.loading() || this.profileOtpCode.length !== 6) return;
+    this.loading.set(true);
+    this.auth.verifyEmailOtp(this.profileOtpCode).subscribe({
+      next: () => {
+        this.loading.set(false);
+        this.otpSent.set(false);
+        this.profileOtpCode = '';
+        this.toast.show(
+          this.lang.lang() === 'fr' ? 'Email vérifié avec succès !' : 'Email verified successfully!',
+          'success'
+        );
+      },
+      error: (err) => {
+        this.toast.show(err.error?.error || 'Code invalide.', 'error');
+        this.loading.set(false);
+      },
+    });
   }
 }

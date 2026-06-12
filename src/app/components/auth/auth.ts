@@ -31,6 +31,8 @@ export class AuthComponent implements AfterViewInit, OnDestroy {
   loading           = signal(false);
   closing           = signal(false);
   forgotPasswordView = signal(false);
+  forgotDone        = signal(false);
+  otpView           = signal(false);
 
   showLoginPwd   = signal(false);
   showPwd        = signal(false);
@@ -39,7 +41,9 @@ export class AuthComponent implements AfterViewInit, OnDestroy {
   private anim!: AnimationItem;
   private loadAnim?: AnimationItem;
 
-  login = { username: '', password: '' };
+  login       = { username: '', password: '' };
+  forgotEmail = '';
+  otpCode     = '';
 
   signup = {
     nom: '', prenoms: '', date_naissance: '', email: '',
@@ -90,6 +94,8 @@ export class AuthComponent implements AfterViewInit, OnDestroy {
   switchTab(t: Tab) {
     this.tab.set(t);
     this.forgotPasswordView.set(false);
+    this.forgotDone.set(false);
+    this.otpView.set(false);
   }
 
   close() {
@@ -134,11 +140,40 @@ export class AuthComponent implements AfterViewInit, OnDestroy {
     const { passwordConfirm, acceptTerms, ...payload } = this.signup;
     this.auth.register(payload).subscribe({
       next: () => this.finishLoading(() => {
-        this.toast.show(this.lang.lang() === 'fr' ? 'Compte créé avec succès !' : 'Account created successfully!', 'success');
-        this.close();
+        this.auth.sendEmailOtp().subscribe();
+        this.otpView.set(true);
       }, start),
       error: (err) => this.finishLoading(() => {
         this.toast.show(err.error?.error || 'Erreur lors de l\'inscription.', 'error');
+      }, start),
+    });
+  }
+
+  onForgotPassword() {
+    if (this.loading() || !this.forgotEmail) return;
+    this.loading.set(true);
+    this.loadAnim?.play();
+    const start = Date.now();
+    this.auth.forgotPassword(this.forgotEmail).subscribe({
+      next: () => this.finishLoading(() => this.forgotDone.set(true), start),
+      error: (err) => this.finishLoading(() => {
+        this.toast.show(err.error?.error || 'Erreur.', 'error');
+      }, start),
+    });
+  }
+
+  verifyOtp() {
+    if (this.loading() || this.otpCode.length !== 6) return;
+    this.loading.set(true);
+    this.loadAnim?.play();
+    const start = Date.now();
+    this.auth.verifyEmailOtp(this.otpCode).subscribe({
+      next: () => this.finishLoading(() => {
+        this.toast.show(this.lang.lang() === 'fr' ? 'Email vérifié ! Bienvenue !' : 'Email verified! Welcome!', 'success');
+        this.close();
+      }, start),
+      error: (err) => this.finishLoading(() => {
+        this.toast.show(err.error?.error || 'Code invalide.', 'error');
       }, start),
     });
   }

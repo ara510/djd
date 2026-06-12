@@ -1,0 +1,27 @@
+<div class="adminw-overlay"></div>
+
+<div class="adminw-card">
+  <div class="adminw-card__icon">
+    <svg viewBox="0 0 24 24" fill="currentColor" width="36" height="36" aria-hidden="true">
+      <path d="M2 21h4V9H2v12zm20-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L13.17 1 6.59 7.59C6.22 7.95 6 8.45 6 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/>
+    </svg>
+  </div>
+
+  <div class="adminw-card__body">
+    <h3 class="adminw-card__title">
+      {{ lang.lang() === 'fr' ? 'Email vérifié !' : 'Email verified!' }}
+    </h3>
+
+    <p class="adminw-card__desc">
+      {{ lang.lang() === 'fr'
+        ? 'Vous êtes administrateur DJD et vous avez désormais accès à toutes les fonctionnalités.'
+        : 'You are a DJD administrator and now have access to all features.' }}
+    </p>
+
+    <div class="adminw-card__actions">
+      <button class="adminw-card__btn" type="button" (click)="close()">
+        {{ lang.lang() === 'fr' ? 'Super' : 'Great' }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -35,69 +35,74 @@
         <!-- Billing toggle -->
         <div class="sub-billing">
           <button class="sub-billing__btn" [class.sub-billing__btn--active]="billing() === 'monthly'" (click)="billing.set('monthly')" type="button">
-            {{ lang.lang() === 'fr' ? 'Mensuel' : 'Monthly' }}
+            {{ lang.t('sub.toggle.monthly') }}
           </button>
           <button class="sub-billing__btn" [class.sub-billing__btn--active]="billing() === 'yearly'" (click)="billing.set('yearly')" type="button">
-            {{ lang.lang() === 'fr' ? 'Annuel' : 'Yearly' }}
-            <span class="sub-billing__save">{{ lang.lang() === 'fr' ? '-20%' : '-20%' }}</span>
+            {{ lang.t('sub.toggle.yearly') }}
+            <span class="sub-billing__save">{{ lang.t('sub.toggle.save') }}</span>
           </button>
         </div>
 
         <!-- Plan cards -->
         <div class="sub-plans">
-
-          <!-- FREE -->
-          <div class="sub-plan sub-plan--current">
-            <div class="sub-plan__top">
-              <div class="sub-plan__head">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
-                <span class="sub-plan__name">Free</span>
+          @for (plan of plansInfo; track plan.id) {
+            <div class="sub-plan"
+                 [class.sub-plan--current]="currentPlan === plan.id"
+                 [class.sub-plan--featured]="plan.popular && currentPlan !== plan.id">
+              <div class="sub-plan__top">
+                <div class="sub-plan__head">
+                  @switch (plan.id) {
+                    @case ('generale') {
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                      </svg>
+                    }
+                    @case ('sectorielle') {
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>
+                      </svg>
+                    }
+                    @case ('dediee') {
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+                      </svg>
+                    }
+                  }
+                  <span class="sub-plan__name">{{ lang.t('sub.' + plan.id + '.name') }}</span>
+                </div>
+                @if (currentPlan === plan.id) {
+                  <span class="sub-plan__badge sub-plan__badge--current">{{ lang.t('sub.current') }}</span>
+                } @else if (plan.popular) {
+                  <span class="sub-plan__badge sub-plan__badge--popular">{{ lang.t('sub.popular') }}</span>
+                }
               </div>
-              <span class="sub-plan__badge sub-plan__badge--current">{{ lang.lang() === 'fr' ? 'Actuel' : 'Current' }}</span>
-            </div>
-            <p class="sub-plan__price">{{ lang.lang() === 'fr' ? 'Gratuit' : 'Free' }}</p>
-            <button class="sub-plan__btn sub-plan__btn--disabled" type="button" disabled>
-              {{ lang.lang() === 'fr' ? 'Plan actuel' : 'Current plan' }}
-            </button>
-          </div>
 
-          <!-- PRO -->
-          <div class="sub-plan">
-            <div class="sub-plan__top">
-              <div class="sub-plan__head">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                </svg>
-                <span class="sub-plan__name">Pro</span>
-              </div>
-            </div>
-            <p class="sub-plan__price sub-plan__price--soon">{{ lang.lang() === 'fr' ? 'À venir' : 'Coming soon' }}</p>
-            <button class="sub-plan__btn sub-plan__btn--outline" type="button" disabled>
-              {{ lang.lang() === 'fr' ? 'Choisir' : 'Choose' }}
-            </button>
-          </div>
+              <p class="sub-plan__price">
+                @if (plan.free) {
+                  {{ lang.t('sub.free') }}
+                } @else {
+                  <span class="sub-plan__amount">{{ CURRENCY }}{{ displayPrice(plan.priceMonthly) }}</span>
+                  <span class="sub-plan__period">{{ billing() === 'monthly' ? lang.t('sub.per_month') : lang.t('sub.per_year') }}</span>
+                }
+              </p>
 
-          <!-- PREMIUM -->
-          <div class="sub-plan sub-plan--premium">
-            <div class="sub-plan__top">
-              <div class="sub-plan__head">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                  <path d="M12 2v15.77"/>
-                </svg>
-                <span class="sub-plan__name">Premium</span>
-              </div>
-              <span class="sub-plan__badge sub-plan__badge--premium">{{ lang.lang() === 'fr' ? 'Populaire' : 'Popular' }}</span>
-            </div>
-            <p class="sub-plan__price sub-plan__price--soon">{{ lang.lang() === 'fr' ? 'À venir' : 'Coming soon' }}</p>
-            <button class="sub-plan__btn sub-plan__btn--accent" type="button" disabled>
-              {{ lang.lang() === 'fr' ? 'Choisir' : 'Choose' }}
-            </button>
-          </div>
+              <p class="sub-plan__desc">{{ lang.t('sub.' + plan.id + '.desc') }}</p>
 
+              <button class="sub-plan__btn"
+                      [class.sub-plan__btn--disabled]="currentPlan === plan.id"
+                      [class.sub-plan__btn--accent]="plan.popular && currentPlan !== plan.id"
+                      [class.sub-plan__btn--outline]="!plan.popular && currentPlan !== plan.id"
+                      type="button" disabled>
+                {{ currentPlan === plan.id
+                    ? lang.t('sub.current_plan')
+                    : (plan.free ? lang.t('sub.choose') : lang.t('sub.soon')) }}
+              </button>
+            </div>
+          }
         </div>
+
+        <p class="sub-note">{{ lang.t('sub.note') }}</p>
       </div>
     }
 
@@ -152,21 +157,40 @@
               </span>
             </div>
           </div>
+          @if (!user.email_verified) {
+            @if (!otpSent()) {
+              <button class="profile-verify-btn" type="button" (click)="sendVerificationEmail()">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+                {{ lang.lang() === 'fr' ? 'Vérifier mon email' : 'Verify my email' }}
+              </button>
+            } @else {
+              <div class="profile-otp">
+                <p class="profile-otp__hint">
+                  {{ lang.lang() === 'fr' ? 'Code envoyé à ' : 'Code sent to ' }}<strong>{{ user.email }}</strong>
+                </p>
+                <div class="profile-otp__row">
+                  <input class="profile-otp__input" type="text" inputmode="numeric"
+                         pattern="[0-9]{6}" maxlength="6" [(ngModel)]="profileOtpCode"
+                         placeholder="000000" />
+                  <button class="profile-otp__confirm" type="button"
+                          (click)="verifyEmailFromProfile()"
+                          [disabled]="loading() || profileOtpCode.length !== 6">
+                    {{ loading() ? '…' : (lang.lang() === 'fr' ? 'Confirmer' : 'Confirm') }}
+                  </button>
+                </div>
+                <button class="profile-otp__resend" type="button" (click)="sendVerificationEmail()">
+                  {{ lang.lang() === 'fr' ? 'Renvoyer le code' : 'Resend code' }}
+                </button>
+              </div>
+            }
+          }
           @if (user.telephone) {
             <div class="profile-info__row">
               <span class="profile-info__label">{{ lang.lang() === 'fr' ? 'Téléphone' : 'Phone' }}</span>
-              <div class="profile-info__value-row">
-                <span class="profile-info__value">{{ user.telephone }}</span>
-                <span class="profile-verify-badge" [class.profile-verify-badge--ok]="user.phone_verified" [class.profile-verify-badge--no]="!user.phone_verified">
-                  @if (user.phone_verified) {
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                    {{ lang.lang() === 'fr' ? 'Vérifié' : 'Verified' }}
-                  } @else {
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                    {{ lang.lang() === 'fr' ? 'Non vérifié' : 'Unverified' }}
-                  }
-                </span>
-              </div>
+              <span class="profile-info__value">{{ user.telephone }}</span>
             </div>
           }
           @if (user.pays || user.ville) {
@@ -191,38 +215,45 @@
           </div>
         </div>
 
-        <hr class="profile-divider" />
+        @if (!isAdmin) {
+          <hr class="profile-divider" />
 
-        <!-- Notifications -->
-        <div class="profile-notif">
-          <p class="profile-notif__title">{{ lang.lang() === 'fr' ? 'Notifications' : 'Notifications' }}</p>
-          <div class="profile-notif__row">
-            <span class="profile-notif__label">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                <polyline points="22,6 12,13 2,6"/>
-              </svg>
-              Email
-            </span>
-            <span class="profile-notif__value">
-              {{ (user.notif_email !== false) ? (lang.lang() === 'fr' ? 'Activé' : 'Enabled') : (lang.lang() === 'fr' ? 'Désactivé' : 'Disabled') }}
-            </span>
+          <!-- Notifications -->
+          <div class="profile-notif">
+            <p class="profile-notif__title">{{ lang.lang() === 'fr' ? 'Notifications' : 'Notifications' }}</p>
+            <div class="profile-notif__row">
+              <span class="profile-notif__label">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+                Email
+              </span>
+              <span class="profile-notif__value">
+                {{ (user.notif_email !== false) ? (lang.lang() === 'fr' ? 'Activé' : 'Enabled') : (lang.lang() === 'fr' ? 'Désactivé' : 'Disabled') }}
+              </span>
+            </div>
           </div>
-        </div>
 
-        <hr class="profile-divider" />
+          <hr class="profile-divider" />
 
-        <!-- Abonnement -->
-        <button class="profile-links__row profile-links__row--sub" type="button" (click)="showSubscription.set(true)">
-          <span class="profile-links__icon">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
-            </svg>
-          </span>
-          <span class="profile-links__text">{{ lang.lang() === 'fr' ? 'Mon abonnement' : 'My subscription' }}</span>
-          <span class="sub-tier-badge sub-tier-badge--free">FREE</span>
-          <svg class="profile-links__chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
+          <!-- Abonnement -->
+          <button class="profile-links__row profile-links__row--sub" type="button" (click)="showSubscription.set(true)">
+            <span class="profile-links__icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+              </svg>
+            </span>
+            <span class="profile-links__text">{{ lang.lang() === 'fr' ? 'Mon abonnement' : 'My subscription' }}</span>
+            <span class="sub-tier-badge"
+                  [class.sub-tier-badge--generale]="currentPlan === 'generale'"
+                  [class.sub-tier-badge--sectorielle]="currentPlan === 'sectorielle'"
+                  [class.sub-tier-badge--dediee]="currentPlan === 'dediee'">
+              {{ lang.t('sub.' + currentPlan + '.short') }}
+            </span>
+            <svg class="profile-links__chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        }
 
         <hr class="profile-divider" />
 
@@ -361,38 +392,88 @@
         </div>
 
         <!-- Notifications -->
-        <div class="profile-edit__section">
-          <span class="profile-edit__section-title">{{ lang.lang() === 'fr' ? 'Notifications' : 'Notifications' }}</span>
-          <div class="profile-edit__notif-row">
-            <div class="profile-edit__notif-info">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                <polyline points="22,6 12,13 2,6"/>
-              </svg>
-              <span>Email</span>
+        @if (!isAdmin) {
+          <div class="profile-edit__section">
+            <span class="profile-edit__section-title">{{ lang.lang() === 'fr' ? 'Notifications' : 'Notifications' }}</span>
+            <div class="profile-edit__notif-row">
+              <div class="profile-edit__notif-info">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+                <span>Email</span>
+              </div>
+              <label class="profile-toggle">
+                <input type="checkbox" name="notif_email" [(ngModel)]="form.notif_email" />
+                <span class="profile-toggle__track"></span>
+              </label>
             </div>
-            <label class="profile-toggle">
-              <input type="checkbox" name="notif_email" [(ngModel)]="form.notif_email" />
-              <span class="profile-toggle__track"></span>
-            </label>
           </div>
-        </div>
+        }
 
         <!-- Mot de passe -->
         <div class="profile-edit__section">
           <span class="profile-edit__section-title">{{ lang.lang() === 'fr' ? 'Mot de passe' : 'Password' }}</span>
           <div class="profile-edit__field">
             <label class="profile-edit__label">{{ lang.lang() === 'fr' ? 'Mot de passe actuel' : 'Current password' }}</label>
-            <input class="profile-edit__input" type="password" name="currentPassword" [(ngModel)]="form.currentPassword" autocomplete="current-password" [placeholder]="lang.lang() === 'fr' ? 'Requis pour changer' : 'Required to change'" />
+            <div class="profile-edit__pwd-wrap">
+              <input class="profile-edit__input" [type]="showCurrentPwd() ? 'text' : 'password'" name="currentPassword" [(ngModel)]="form.currentPassword" autocomplete="current-password" [placeholder]="lang.lang() === 'fr' ? 'Requis pour changer' : 'Required to change'" />
+              <button class="profile-edit__eye" type="button" (click)="showCurrentPwd.set(!showCurrentPwd())" tabindex="-1">
+                @if (showCurrentPwd()) {
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                    <line x1="1" y1="1" x2="23" y2="23"/>
+                  </svg>
+                } @else {
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                }
+              </button>
+            </div>
           </div>
           <div class="profile-edit__row">
             <div class="profile-edit__field">
               <label class="profile-edit__label">{{ lang.lang() === 'fr' ? 'Nouveau' : 'New' }}</label>
-              <input class="profile-edit__input" type="password" name="newPassword" [(ngModel)]="form.newPassword" minlength="8" autocomplete="new-password" placeholder="••••••••" />
+              <div class="profile-edit__pwd-wrap">
+                <input class="profile-edit__input" [type]="showNewPwd() ? 'text' : 'password'" name="newPassword" [(ngModel)]="form.newPassword" minlength="8" autocomplete="new-password" placeholder="••••••••" />
+                <button class="profile-edit__eye" type="button" (click)="showNewPwd.set(!showNewPwd())" tabindex="-1">
+                  @if (showNewPwd()) {
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                      <line x1="1" y1="1" x2="23" y2="23"/>
+                    </svg>
+                  } @else {
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  }
+                </button>
+              </div>
             </div>
             <div class="profile-edit__field">
               <label class="profile-edit__label">{{ lang.lang() === 'fr' ? 'Confirmer' : 'Confirm' }}</label>
-              <input class="profile-edit__input" type="password" name="confirmPassword" [(ngModel)]="form.confirmPassword" autocomplete="new-password" placeholder="••••••••" />
+              <div class="profile-edit__pwd-wrap">
+                <input class="profile-edit__input" [type]="showConfirmPwd() ? 'text' : 'password'" name="confirmPassword" [(ngModel)]="form.confirmPassword" autocomplete="new-password" placeholder="••••••••" />
+                <button class="profile-edit__eye" type="button" (click)="showConfirmPwd.set(!showConfirmPwd())" tabindex="-1">
+                  @if (showConfirmPwd()) {
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                      <line x1="1" y1="1" x2="23" y2="23"/>
+                    </svg>
+                  } @else {
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  }
+                </button>
+              </div>
             </div>
           </div>
         </div>

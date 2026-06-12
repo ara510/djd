@@ -19,7 +19,8 @@ export interface User {
   genre?: string | null;
   notif_email?: boolean;
   email_verified?: boolean;
-  phone_verified?: boolean;
+  plan?: 'generale' | 'sectorielle' | 'dediee';
+  is_admin?: boolean;
   deleted_at?: string | null;
 }
 
@@ -35,6 +36,9 @@ export class AuthService {
 
   currentUser = signal<User | null>(null);
   token       = signal<string | null>(localStorage.getItem('djd_token'));
+
+  /** Affiche la notif « bienvenue admin » après vérification de l'email d'un compte DJD. */
+  readonly showAdminWelcome = signal(false);
 
   constructor() {
     if (this.token()) {
@@ -122,6 +126,29 @@ export class AuthService {
     }).pipe(
       tap(res => this.saveSession(res.token, res.user))
     );
+  }
+
+  sendEmailOtp() {
+    return this.http.post('/api/auth/send-otp', {}, {
+      headers: { Authorization: `Bearer ${this.token()}` },
+    });
+  }
+
+  verifyEmailOtp(code: string) {
+    return this.http.post<{ token: string; user: User }>('/api/auth/verify-otp', { code }, {
+      headers: { Authorization: `Bearer ${this.token()}` },
+    }).pipe(tap(res => {
+      this.saveSession(res.token, res.user);
+      if (res.user.is_admin && res.user.email_verified) this.showAdminWelcome.set(true);
+    }));
+  }
+
+  forgotPassword(email: string) {
+    return this.http.post('/api/auth/forgot-password', { email });
+  }
+
+  resetPassword(token: string, password: string) {
+    return this.http.post('/api/auth/reset-password', { token, password });
   }
 
   private loadMe() {

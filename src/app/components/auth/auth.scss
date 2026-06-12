@@ -299,9 +299,25 @@
   }
 
   &__terms-link {
+    background: none;
+    border: none;
+    outline: none;
+    padding: 0;
+    margin: 0;
+    font-family: inherit;
+    font-size: inherit;
     color: var(--color-accent);
-    text-decoration: none;
-    &:hover { text-decoration: underline; }
+    cursor: pointer;
+    display: inline;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    transition: text-decoration-color 0.2s;
+    &:hover { text-decoration-color: var(--color-accent); }
+  }
+
+  &__checkbox span {
+    display: inline;
+    line-height: 1.5;
   }
 
   &__submit {
@@ -320,6 +336,52 @@
 
     &:hover:not(:disabled) { background: var(--color-accent); }
     &:disabled { opacity: 0.4; cursor: not-allowed; }
+  }
+}
+
+// ─── OTP / Done centered states ───────────────────────────────────────────────
+.auth-form--otp,
+.auth-form--forgot {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+
+  .auth-form__desc {
+    text-align: center;
+    max-width: 26ch;
+  }
+
+  .auth-form__field { width: 100%; text-align: left; }
+
+  .auth-form__input--otp {
+    letter-spacing: 0.35em;
+    font-size: 1.3rem;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .auth-form__submit { width: 100%; }
+
+  .auth-form__back {
+    margin-top: 0.25rem;
+    &:disabled { opacity: 0.4; cursor: not-allowed; }
+  }
+}
+
+.auth-form__done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: center;
+  width: 100%;
+
+  .auth-form__title { margin: 0; }
+
+  .auth-form__desc {
+    max-width: 26ch;
+    margin: 0;
   }
 }
 

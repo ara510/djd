@@ -1,9 +1,13 @@
 import { Component, signal, inject, HostListener } from '@angular/core';
 import { AuthService } from './services/auth.service';
 import { PrivacyService } from './services/privacy.service';
+import { VeilleService } from './services/veille.service';
+import { DashboardComponent } from './components/dashboard/dashboard';
+import { AdminWelcomeComponent } from './components/admin-welcome/admin-welcome';
 import { CookieBannerComponent } from './components/cookie-banner/cookie-banner';
 import { PrivacyModalComponent } from './components/privacy-modal/privacy-modal';
 import { FeedbackModalComponent } from './components/feedback-modal/feedback-modal';
+import { ResetPasswordComponent } from './components/reset-password/reset-password';
 import { NavbarComponent }   from './components/navbar/navbar';
 import { HeroComponent }     from './components/hero/hero';
 import { AboutComponent }    from './components/about/about';
@@ -32,6 +36,9 @@ import { ProfileComponent }  from './components/profile/profile';
     CookieBannerComponent,
     PrivacyModalComponent,
     FeedbackModalComponent,
+    ResetPasswordComponent,
+    DashboardComponent,
+    AdminWelcomeComponent,
   ],
   template: `
     <app-navbar
@@ -65,21 +72,41 @@ import { ProfileComponent }  from './components/profile/profile';
     @if (privacy.isOpen()) {
       <app-privacy-modal></app-privacy-modal>
     }
+    @if (resetToken()) {
+      <app-reset-password [token]="resetToken()!" (closed)="clearResetToken()"></app-reset-password>
+    }
+    @if (veille.isOpen()) {
+      <app-dashboard></app-dashboard>
+    }
+    @if (auth.showAdminWelcome()) {
+      <app-admin-welcome (closed)="auth.showAdminWelcome.set(false)"></app-admin-welcome>
+    }
   `,
   styles: [``],
 })
 export class App {
-  private auth = inject(AuthService);
+  auth         = inject(AuthService);
   privacy      = inject(PrivacyService);
+  veille       = inject(VeilleService);
   showAuth         = signal(false);
   showProfile      = signal(false);
   showCookieBanner = signal(false);
   showFeedback     = signal(false);
+  resetToken       = signal<string | null>(null);
 
   constructor() {
     if (!localStorage.getItem('djd_cookies'))
       setTimeout(() => this.showCookieBanner.set(true), 3000);
+
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('reset');
+    if (token) {
+      this.resetToken.set(token);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }
+
+  clearResetToken() { this.resetToken.set(null); }
 
   @HostListener('document:mousemove')
   @HostListener('document:click')
