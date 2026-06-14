@@ -1,0 +1,112 @@
+<section class="vp" id="veille">
+  <div class="container">
+    <p class="vp__eyebrow">{{ fr ? 'Veille générale' : 'General watch' }}</p>
+    <h2 class="vp__title">{{ fr ? 'Un aperçu de notre veille' : 'A glimpse of our watch' }}</h2>
+    <p class="vp__intro">
+      {{ fr
+        ? 'Actualités politiques, économiques et sociales à Madagascar et à l\'international, sélectionnées par nos équipes.'
+        : 'Political, economic and social news from Madagascar and abroad, curated by our teams.' }}
+    </p>
+
+    @if (loading()) {
+      <p class="vp__state">{{ fr ? 'Chargement…' : 'Loading…' }}</p>
+    } @else if (items().length === 0) {
+      <p class="vp__state">{{ fr ? 'Aucune veille publiée pour le moment.' : 'No published watch items yet.' }}</p>
+    } @else {
+      @if (!isLogged) {
+        <p class="vp__quota">
+          @if (remaining > 0) {
+            {{ fr ? 'Lecture libre : ' : 'Free reads: ' }}<strong>{{ remaining }}</strong>
+            {{ fr ? 'veille(s) restante(s)' : 'left' }}
+          } @else {
+            {{ fr ? 'Limite de lecture atteinte — créez un compte pour continuer.' : 'Read limit reached — create an account to continue.' }}
+          }
+        </p>
+      }
+
+      <div class="vp__grid">
+        @for (item of items(); track item.id) {
+          <article class="vp-card" (click)="openItem(item)">
+            @if (item.image) {
+              <div class="vp-card__media">
+                <img [src]="item.image" [alt]="cardHeading(item)" loading="lazy" />
+                @if ((item.images_count ?? 0) > 1) {
+                  <span class="vp-card__imgcount">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    {{ item.images_count }}
+                  </span>
+                }
+              </div>
+            }
+            <div class="vp-card__body">
+              <div class="vp-card__meta">
+                @for (t of typesOf(item); track t) {
+                  <span class="vp-card__type" [attr.data-type]="t" [attr.data-net]="t === 'social' ? item.social_network : null">
+                    <span class="vp-card__type-icon"><app-veille-icon [type]="t" [network]="t === 'social' ? item.social_network : null"></app-veille-icon></span>
+                    {{ t === 'social' && item.social_network ? networkLabel(item.social_network) : typeLabel(t) }}
+                  </span>
+                }
+                @if (showSectorChip(item)) { <span class="vp-card__sector">{{ sectorLabel(item.sector) }}</span> }
+                <span class="vp-card__date">{{ item.published_at | date:'dd/MM/yy' }}</span>
+              </div>
+              <h3 class="vp-card__heading">{{ cardHeading(item) }}</h3>
+              @if (item.excerpt) { <p class="vp-card__excerpt">{{ item.excerpt }}</p> }
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- ── Détail (lecture seule) ── -->
+  @if (selected(); as item) {
+    <div class="vp-detail-overlay" (click)="close()"></div>
+    <div class="vp-detail">
+      <button class="vp-detail__close" type="button" (click)="close()" [attr.aria-label]="fr ? 'Fermer' : 'Close'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      @if (item.image) { <div class="vp-detail__media"><img [src]="item.image" [alt]="cardHeading(item)" /></div> }
+      <div class="vp-detail__body">
+        <div class="vp-card__meta">
+          @for (t of typesOf(item); track t) {
+            <span class="vp-card__type" [attr.data-type]="t" [attr.data-net]="t === 'social' ? item.social_network : null">
+              <span class="vp-card__type-icon"><app-veille-icon [type]="t" [network]="t === 'social' ? item.social_network : null"></app-veille-icon></span>
+              {{ t === 'social' && item.social_network ? networkLabel(item.social_network) : typeLabel(t) }}
+            </span>
+          }
+          @if (showSectorChip(item)) { <span class="vp-card__sector">{{ sectorLabel(item.sector) }}</span> }
+          <span class="vp-card__date">{{ item.published_at | date:'dd/MM/yy' }}</span>
+        </div>
+        <h2 class="vp-detail__title">{{ cardHeading(item) }}</h2>
+        @if (item.author) { <p class="vp-detail__author">{{ fr ? 'Par' : 'By' }} {{ item.author }}</p> }
+        @if (item.excerpt) { <p class="vp-detail__excerpt">{{ item.excerpt }}</p> }
+        @if (item.url) {
+          <a class="vp-detail__link" [href]="item.url" target="_blank" rel="noopener">
+            {{ fr ? 'Lire la source' : 'Read source' }}
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
+          </a>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ── Mur : inviter à créer un compte ── -->
+  @if (showGate()) {
+    <div class="vp-gate-overlay" (click)="showGate.set(false)"></div>
+    <div class="vp-gate">
+      <div class="vp-gate__icon">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <h3 class="vp-gate__title">{{ fr ? 'Continuez gratuitement' : 'Continue for free' }}</h3>
+      <p class="vp-gate__desc">
+        {{ fr
+          ? 'Vous avez lu vos 5 veilles gratuites. Créez un compte gratuit pour accéder à toute la Veille Générale.'
+          : 'You have read your 5 free items. Create a free account to access all the General Watch.' }}
+      </p>
+      <div class="vp-gate__actions">
+        <button class="vp-gate__btn vp-gate__btn--ghost" type="button" (click)="showGate.set(false)">{{ fr ? 'Plus tard' : 'Later' }}</button>
+        <button class="vp-gate__btn vp-gate__btn--accent" type="button" (click)="goSignup()">{{ fr ? 'Créer un compte' : 'Create account' }}</button>
+      </div>
+    </div>
+  }
+</section>

@@ -54,4 +54,8 @@ export class HeroComponent implements OnInit {
   scrollToAbout() {
     document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
   }
+
+  scrollToVeille() {
+    document.getElementById('veille')?.scrollIntoView({ behavior: 'smooth' });
+  }
 }

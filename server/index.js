@@ -175,6 +175,15 @@ db.query(`
     created_at TIMESTAMPTZ DEFAULT NOW()
   )
 `).catch(() => {});
+db.query(`
+  CREATE TABLE IF NOT EXISTS leads (
+    id         SERIAL PRIMARY KEY,
+    email      TEXT NOT NULL,
+    kind       VARCHAR(40),
+    detail     TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  )
+`).catch(() => {});
 
 // ─── JWT middleware ────────────────────────────────────────────────────────────
 function requireAuth(req, res, next) {
@@ -738,6 +747,49 @@ app.post('/api/contact', async (req, res) => {
   }
 });
 
+// ─── POST /api/leads — capture d'email (rapport d'exemple, ressources…) (public) ──
+const LEADS_EMAIL = 'nathanrakotomavo05@gmail.com'; // destinataire des notifications prospects
+app.post('/api/leads', async (req, res) => {
+  const { email, kind, detail } = req.body;
+  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))
+    return res.status(400).json({ error: 'Adresse email invalide.' });
+  try {
+    await db.query(
+      'INSERT INTO leads (email, kind, detail) VALUES ($1, $2, $3)',
+      [email.trim().toLowerCase(), (kind || '').slice(0, 40), (detail || '').slice(0, 200)]
+    );
+    resend.emails.send({
+      from:    'noreply@dujardin-delacour.com',
+      to:      LEADS_EMAIL,
+      subject: `[DJD] Nouveau prospect — ${kind || 'contact'}`,
+      html: emailLayout(`
+        <h2 style="font-family:Georgia,serif;font-size:1.1rem;font-weight:400;color:#1A1916;margin:0 0 6px;">Nouveau prospect</h2>
+        <p style="font-size:0.75rem;letter-spacing:0.12em;text-transform:uppercase;color:#9A8E7E;margin:0 0 24px;">Capture d'email — Site web</p>
+        <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
+          <tr><td style="padding:8px 0;color:#9A8E7E;width:90px;">Email</td><td style="padding:8px 0;"><a href="mailto:${email}" style="color:#1A1916;">${email}</a></td></tr>
+          <tr><td style="padding:8px 0;color:#9A8E7E;">Source</td><td style="padding:8px 0;color:#1A1916;">${kind || '—'}${detail ? ' · ' + detail : ''}</td></tr>
+        </table>`),
+    }).catch(() => {});
+    res.status(201).json({ success: true });
+  } catch (err) {
+    console.error('Lead error:', err);
+    res.status(500).json({ error: 'Erreur serveur.' });
+  }
+});
+
+// ─── GET /api/leads — liste des prospects (admin DJD) ─────────────────────────
+app.get('/api/leads', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      'SELECT id, email, kind, detail, created_at FROM leads ORDER BY created_at DESC LIMIT 1000'
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Leads list error:', err);
+    res.status(500).json({ error: 'Erreur serveur.' });
+  }
+});
+
 // ─── Veille (dashboard) ───────────────────────────────────────────────────────
 const VEILLE_TYPES    = ['web', 'social', 'radio', 'tv', 'presse'];
 const SOCIAL_NETWORKS = ['facebook', 'youtube', 'instagram', 'x', 'linkedin'];
@@ -846,6 +898,28 @@ app.get('/api/veille/trash', requireAuth, requireAdmin, async (req, res) => {
     res.json(rows);
   } catch (err) {
     console.error('Veille trash error:', err);
+    res.status(500).json({ error: 'Erreur serveur.' });
+  }
+});
+
+// GET /api/veille/public — vitrine grand public (sans compte) : Veille Générale publiée
+app.get('/api/veille/public', async (req, res) => {
+  try {
+    const allowed = sectorsForLevel(0); // niveau Générale uniquement
+    const { rows } = await db.query(
+      `SELECT id, title, source, source_type, source_types, social_network, sector, url, excerpt, image, author,
+              COALESCE(array_length(images, 1), 0) AS images_count, (video IS NOT NULL) AS has_video,
+              published_at
+       FROM veille_items
+       WHERE deleted_at IS NULL AND status = 'published' AND ${visibleSql('published_at')}
+         AND (sector IS NULL OR sector = ANY($1))
+       ORDER BY pinned DESC, published_at DESC, id DESC
+       LIMIT 30`,
+      [allowed]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Veille public error:', err);
     res.status(500).json({ error: 'Erreur serveur.' });
   }
 });

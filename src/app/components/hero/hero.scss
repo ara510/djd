@@ -45,11 +45,18 @@
     animation: fadeUp 0.8s var(--ease-out) 0.6s both;
   }
 
+  &__ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+    margin-block-start: 2.5rem;
+    animation: fadeUp 0.8s var(--ease-out) 0.75s both;
+  }
+
   &__cta {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    margin-block-start: 2.5rem;
     padding: 0.85rem 2rem;
     background: transparent;
     border: 1px solid var(--color-accent);
@@ -60,8 +67,7 @@
     letter-spacing: 0.15em;
     text-transform: uppercase;
     cursor: pointer;
-    transition: background 0.3s ease, color 0.3s ease;
-    animation: fadeUp 0.8s var(--ease-out) 0.75s both;
+    transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 
     svg { transition: transform 0.3s ease; }
 
@@ -70,6 +76,13 @@
       color: var(--color-bg);
 
       svg { transform: translateY(3px); }
+    }
+
+    // Variante secondaire (ton encre) pour « Découvrir la veille »
+    &--ghost {
+      border-color: var(--color-border);
+      color: var(--color-ink);
+      &:hover { background: var(--color-ink); border-color: var(--color-ink); color: var(--color-bg); svg { transform: none; } }
     }
   }
 

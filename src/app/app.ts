@@ -4,6 +4,8 @@ import { PrivacyService } from './services/privacy.service';
 import { VeilleService } from './services/veille.service';
 import { DashboardComponent } from './components/dashboard/dashboard';
 import { AdminWelcomeComponent } from './components/admin-welcome/admin-welcome';
+import { VeillePublicComponent } from './components/veille-public/veille-public';
+import { OffersComponent } from './components/offers/offers';
 import { CookieBannerComponent } from './components/cookie-banner/cookie-banner';
 import { PrivacyModalComponent } from './components/privacy-modal/privacy-modal';
 import { FeedbackModalComponent } from './components/feedback-modal/feedback-modal';
@@ -39,6 +41,8 @@ import { ProfileComponent }  from './components/profile/profile';
     ResetPasswordComponent,
     DashboardComponent,
     AdminWelcomeComponent,
+    VeillePublicComponent,
+    OffersComponent,
   ],
   template: `
     <app-navbar
@@ -50,6 +54,8 @@ import { ProfileComponent }  from './components/profile/profile';
       <app-hero></app-hero>
       <app-about></app-about>
       <app-services></app-services>
+      <app-offers (openAuth)="showAuth.set(true)"></app-offers>
+      <app-veille-public (openAuth)="showAuth.set(true)"></app-veille-public>
       <app-izao></app-izao>
       <app-approach></app-approach>
       <app-contact></app-contact>

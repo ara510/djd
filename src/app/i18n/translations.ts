@@ -16,6 +16,7 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'hero.title3':   'Impact.',
     'hero.sub':      'Communication stratégique et relations publiques\npour les organisations et leaders à Madagascar.',
     'hero.cta':      'Découvrir',
+    'hero.cta.veille': 'Découvrir la veille',
 
     // About
     'about.label':   'À propos',
@@ -161,6 +162,7 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'hero.title3':   'Impact.',
     'hero.sub':      'Strategic communication and public relations\nfor organizations and leaders in Madagascar.',
     'hero.cta':      'Discover',
+    'hero.cta.veille': 'Explore the watch',
 
     // About
     'about.label':   'About',

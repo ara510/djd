@@ -1,0 +1,84 @@
+<section class="of" id="offres">
+  <div class="container">
+    <p class="of__eyebrow">{{ fr ? 'Nos offres de veille' : 'Our watch plans' }}</p>
+    <h2 class="of__title">
+      {{ fr ? 'La veille médias qui éclaire vos décisions.' : 'Media intelligence that informs your decisions.' }}
+    </h2>
+    <p class="of__intro">
+      {{ fr
+        ? 'Presse, télévision, radio, web et réseaux sociaux : nous surveillons, trions et synthétisons l\'information stratégique à Madagascar et à l\'international — pour que vous gardiez une longueur d\'avance.'
+        : 'Press, TV, radio, web and social media: we monitor, filter and summarise strategic information in Madagascar and abroad — so you always stay one step ahead.' }}
+    </p>
+
+    <div class="of__cta-band">
+      <span class="of__cta-text">{{ fr ? 'Découvrez la qualité de notre veille' : 'See the quality of our watch' }}</span>
+      <button class="of__cta-btn" type="button" (click)="openReport()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        {{ fr ? 'Recevoir un rapport d\'exemple gratuit' : 'Get a free sample report' }}
+      </button>
+    </div>
+
+    <div class="of__grid">
+      @for (p of plans; track p.id) {
+        <article class="of-plan" [class.of-plan--featured]="p.popular">
+          @if (p.popular) { <span class="of-plan__badge">{{ lang.t('sub.popular') }}</span> }
+          <div class="of-plan__head">
+            @switch (p.id) {
+              @case ('generale') {
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              }
+              @case ('sectorielle') {
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+              }
+              @case ('dediee') {
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+              }
+            }
+            <h3 class="of-plan__name">{{ lang.t('sub.' + p.id + '.name') }}</h3>
+          </div>
+
+          <p class="of-plan__price">
+            @if (p.free) { {{ fr ? 'Gratuit' : 'Free' }} }
+            @else { <span class="of-plan__quote">{{ fr ? 'Sur devis' : 'On request' }}</span> }
+          </p>
+
+          <p class="of-plan__desc">{{ lang.t('sub.' + p.id + '.desc') }}</p>
+
+          @if (p.free) {
+            <button class="of-plan__btn of-plan__btn--outline" type="button" (click)="openAuth.emit()">
+              {{ fr ? 'Créer un compte gratuit' : 'Create a free account' }}
+            </button>
+          } @else {
+            <button class="of-plan__btn of-plan__btn--accent" type="button" (click)="openQuote(p.id)">
+              {{ fr ? 'Demander un devis' : 'Request a quote' }}
+            </button>
+          }
+        </article>
+      }
+    </div>
+  </div>
+
+  <!-- ── Modale de capture d'email ── -->
+  @if (showLead()) {
+    <div class="of-lead-overlay" (click)="closeLead()"></div>
+    <div class="of-lead">
+      <button class="of-lead__close" type="button" (click)="closeLead()" [attr.aria-label]="fr ? 'Fermer' : 'Close'">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+
+      <h3 class="of-lead__title">
+        {{ leadKind() === 'rapport_exemple'
+          ? (fr ? 'Recevez un rapport d\'exemple' : 'Get a sample report')
+          : (fr ? 'Demander un devis' : 'Request a quote') }}
+      </h3>
+      <p class="of-lead__desc">
+        {{ leadDetail() ? leadDetail() + ' — ' : '' }}{{ fr ? 'Laissez votre adresse email, nous vous recontactons rapidement.' : 'Leave your email and we\'ll get back to you shortly.' }}
+      </p>
+      <input class="of-lead__input" type="email" [(ngModel)]="leadEmail"
+             (keydown.enter)="submitLead()" [placeholder]="fr ? 'votre@email.com' : 'your@email.com'" />
+      <button class="of-plan__btn of-plan__btn--accent of-lead__send" type="button" (click)="submitLead()" [disabled]="sending()">
+        {{ sending() ? (fr ? 'Envoi…' : 'Sending…') : (fr ? 'Envoyer' : 'Send') }}
+      </button>
+    </div>
+  }
+</section>
