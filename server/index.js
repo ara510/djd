@@ -184,6 +184,33 @@ db.query(`
     created_at TIMESTAMPTZ DEFAULT NOW()
   )
 `).catch(() => {});
+// Chat support intégré : une conversation par compte (user_id) ou par visiteur (guest_token).
+db.query(`
+  CREATE TABLE IF NOT EXISTS chat_conversations (
+    id              SERIAL PRIMARY KEY,
+    user_id         INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    guest_token     TEXT,
+    guest_email     TEXT,
+    guest_name      TEXT,
+    status          VARCHAR(12) NOT NULL DEFAULT 'open',
+    last_message_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at      TIMESTAMPTZ DEFAULT NOW()
+  )
+`).catch(() => {});
+db.query(`CREATE INDEX IF NOT EXISTS idx_chat_conv_user  ON chat_conversations(user_id)`).catch(() => {});
+db.query(`CREATE INDEX IF NOT EXISTS idx_chat_conv_token ON chat_conversations(guest_token)`).catch(() => {});
+db.query(`
+  CREATE TABLE IF NOT EXISTS chat_messages (
+    id              SERIAL PRIMARY KEY,
+    conversation_id INTEGER NOT NULL REFERENCES chat_conversations(id) ON DELETE CASCADE,
+    sender          VARCHAR(8) NOT NULL,
+    body            TEXT NOT NULL,
+    read_by_staff   BOOLEAN NOT NULL DEFAULT FALSE,
+    read_by_user    BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at      TIMESTAMPTZ DEFAULT NOW()
+  )
+`).catch(() => {});
+db.query(`CREATE INDEX IF NOT EXISTS idx_chat_msg_conv ON chat_messages(conversation_id)`).catch(() => {});
 
 // ─── JWT middleware ────────────────────────────────────────────────────────────
 function requireAuth(req, res, next) {
@@ -206,6 +233,15 @@ async function requireAdmin(req, res, next) {
   } catch {
     res.status(500).json({ error: 'Erreur serveur.' });
   }
+}
+
+// Auth optionnelle : renseigne req.user si un token valide est présent, sinon poursuit (visiteur anonyme).
+function optionalAuth(req, res, next) {
+  const header = req.headers.authorization;
+  if (header?.startsWith('Bearer ')) {
+    try { req.user = jwt.verify(header.slice(7), process.env.JWT_SECRET); } catch { /* visiteur anonyme */ }
+  }
+  next();
 }
 
 // Admin d'office : tout email du domaine DJD est administrateur.
@@ -786,6 +822,195 @@ app.get('/api/leads', requireAuth, requireAdmin, async (req, res) => {
     res.json(rows);
   } catch (err) {
     console.error('Leads list error:', err);
+    res.status(500).json({ error: 'Erreur serveur.' });
+  }
+});
+
+// ─── Chat support (messagerie intégrée) ───────────────────────────────────────
+const CHAT_BODY_MAX = 2000;
+const CHAT_EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+const esc = (s) => String(s).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+
+// Résout la conversation courante (connecté = par user_id, visiteur = par guest_token).
+async function resolveConversation(req, { createIfMissing = false, guestEmail, guestName } = {}) {
+  if (req.user?.id) {
+    const found = await db.query(`SELECT * FROM chat_conversations WHERE user_id = $1 ORDER BY id DESC LIMIT 1`, [req.user.id]);
+    if (found.rows.length) return found.rows[0];
+    if (!createIfMissing) return null;
+    const created = await db.query(`INSERT INTO chat_conversations (user_id) VALUES ($1) RETURNING *`, [req.user.id]);
+    return created.rows[0];
+  }
+  const token = (req.body?.guestToken || req.query?.token || '').toString().slice(0, 64);
+  if (!token) return null;
+  const found = await db.query(`SELECT * FROM chat_conversations WHERE guest_token = $1 ORDER BY id DESC LIMIT 1`, [token]);
+  if (found.rows.length) return found.rows[0];
+  if (!createIfMissing) return null;
+  const created = await db.query(
+    `INSERT INTO chat_conversations (guest_token, guest_email, guest_name) VALUES ($1, $2, $3) RETURNING *`,
+    [token, (guestEmail || '').toLowerCase() || null, (guestName || '').slice(0, 80) || null]
+  );
+  return created.rows[0];
+}
+
+// GET /api/chat/me — conversation + messages du visiteur/utilisateur courant (polling)
+// ?seen=1 marque les réponses du staff comme lues (uniquement quand le chat est ouvert).
+app.get('/api/chat/me', optionalAuth, async (req, res) => {
+  try {
+    const conv = await resolveConversation(req, { createIfMissing: false });
+    if (!conv) return res.json({ conversation: null, messages: [], unread: 0 });
+    const { rows } = await db.query(
+      `SELECT id, sender, body, created_at FROM chat_messages WHERE conversation_id = $1 ORDER BY id ASC`, [conv.id]
+    );
+    const u = await db.query(
+      `SELECT COUNT(*)::int AS n FROM chat_messages WHERE conversation_id = $1 AND sender = 'staff' AND NOT read_by_user`, [conv.id]
+    );
+    let unread = u.rows[0].n;
+    if (req.query.seen === '1') {
+      db.query(`UPDATE chat_messages SET read_by_user = TRUE WHERE conversation_id = $1 AND sender = 'staff' AND NOT read_by_user`, [conv.id]).catch(() => {});
+      unread = 0;
+    }
+    res.json({
+      conversation: { id: conv.id, status: conv.status, hasEmail: !!(conv.guest_email || req.user) },
+      messages: rows,
+      unread,
+    });
+  } catch (err) {
+    console.error('Chat me error:', err);
+    res.status(500).json({ error: 'Erreur serveur.' });
+  }
+});
+
+// POST /api/chat/messages — message d'un visiteur/utilisateur
+app.post('/api/chat/messages', optionalAuth, async (req, res) => {
+  const body = (req.body?.body || '').toString().trim();
+  if (!body) return res.status(400).json({ error: 'Message vide.' });
+  if (body.length > CHAT_BODY_MAX) return res.status(400).json({ error: 'Message trop long.' });
+
+  const guestEmail = (req.body?.guestEmail || '').toString().trim().toLowerCase();
+  const guestName  = (req.body?.guestName  || '').toString().trim();
+
+  // Les visiteurs anonymes doivent laisser un email (pour être recontactés).
+  if (!req.user) {
+    const token = (req.body?.guestToken || '').toString();
+    if (!token) return res.status(400).json({ error: 'Session invalide.' });
+    const existing = await db.query(`SELECT guest_email FROM chat_conversations WHERE guest_token = $1 LIMIT 1`, [token]);
+    const hasEmail = existing.rows.length && existing.rows[0].guest_email;
+    if (!hasEmail && !CHAT_EMAIL_RE.test(guestEmail))
+      return res.status(400).json({ error: 'Email requis.', needEmail: true });
+  }
+
+  try {
+    const conv = await resolveConversation(req, { createIfMissing: true, guestEmail, guestName });
+    if (!conv) return res.status(400).json({ error: 'Impossible de démarrer la conversation.' });
+
+    // Anti-spam : on ne notifie le staff que sur le 1er message d'une rafale non lue.
+    const pending = await db.query(
+      `SELECT 1 FROM chat_messages WHERE conversation_id = $1 AND sender = 'user' AND NOT read_by_staff LIMIT 1`, [conv.id]
+    );
+    const wasIdle = pending.rows.length === 0;
+
+    const { rows } = await db.query(
+      `INSERT INTO chat_messages (conversation_id, sender, body) VALUES ($1, 'user', $2) RETURNING id, sender, body, created_at`,
+      [conv.id, body]
+    );
+    await db.query(`UPDATE chat_conversations SET last_message_at = NOW(), status = 'open' WHERE id = $1`, [conv.id]);
+
+    if (wasIdle) {
+      const who = req.user ? `@${req.user.username}` : (conv.guest_email || 'Visiteur');
+      resend.emails.send({
+        from: 'noreply@dujardin-delacour.com',
+        to: LEADS_EMAIL,
+        subject: `[DJD] Nouveau message chat — ${who}`,
+        html: emailLayout(`
+          <h2 style="font-family:Georgia,serif;font-size:1.1rem;font-weight:400;color:#1A1916;margin:0 0 6px;">Nouveau message dans le chat</h2>
+          <p style="font-size:0.75rem;letter-spacing:0.12em;text-transform:uppercase;color:#9A8E7E;margin:0 0 24px;">De ${esc(who)}</p>
+          <p style="font-size:0.95rem;color:#1A1916;line-height:1.6;background:#EFECE5;padding:14px 16px;border-radius:6px;margin:0 0 20px;">${esc(body)}</p>
+          <a href="${APP_URL}" style="display:inline-block;background:#1A1916;color:#fff;text-decoration:none;font-size:0.8rem;letter-spacing:0.08em;text-transform:uppercase;padding:12px 22px;border-radius:4px;">Répondre depuis le dashboard</a>`),
+      }).catch(() => {});
+    }
+
+    res.status(201).json({ conversationId: conv.id, message: rows[0] });
+  } catch (err) {
+    console.error('Chat send error:', err);
+    res.status(500).json({ error: 'Erreur serveur.' });
+  }
+});
+
+// GET /api/chat/conversations — liste pour le staff (aperçu + non-lus)
+app.get('/api/chat/conversations', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await db.query(`
+      SELECT c.id, c.user_id, c.guest_email, c.guest_name, c.status, c.last_message_at, c.created_at,
+             u.username, u.nom, u.prenoms, u.email AS user_email, u.plan,
+             (SELECT body   FROM chat_messages m WHERE m.conversation_id = c.id ORDER BY m.id DESC LIMIT 1) AS last_body,
+             (SELECT sender FROM chat_messages m WHERE m.conversation_id = c.id ORDER BY m.id DESC LIMIT 1) AS last_sender,
+             (SELECT COUNT(*) FROM chat_messages m WHERE m.conversation_id = c.id AND m.sender = 'user' AND NOT m.read_by_staff)::int AS unread
+      FROM chat_conversations c
+      LEFT JOIN users u ON u.id = c.user_id
+      WHERE EXISTS (SELECT 1 FROM chat_messages m WHERE m.conversation_id = c.id)
+      ORDER BY c.last_message_at DESC LIMIT 300`);
+    res.json(rows);
+  } catch (err) {
+    console.error('Chat conversations error:', err);
+    res.status(500).json({ error: 'Erreur serveur.' });
+  }
+});
+
+// GET /api/chat/conversations/:id — messages d'une conversation (marque lus côté staff)
+app.get('/api/chat/conversations/:id', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const conv = await db.query(`
+      SELECT c.*, u.username, u.nom, u.prenoms, u.email AS user_email, u.plan
+      FROM chat_conversations c LEFT JOIN users u ON u.id = c.user_id WHERE c.id = $1`, [req.params.id]);
+    if (!conv.rows.length) return res.status(404).json({ error: 'Conversation introuvable.' });
+    const { rows } = await db.query(
+      `SELECT id, sender, body, created_at FROM chat_messages WHERE conversation_id = $1 ORDER BY id ASC`, [req.params.id]
+    );
+    db.query(`UPDATE chat_messages SET read_by_staff = TRUE WHERE conversation_id = $1 AND sender = 'user' AND NOT read_by_staff`, [req.params.id]).catch(() => {});
+    res.json({ conversation: conv.rows[0], messages: rows });
+  } catch (err) {
+    console.error('Chat conversation error:', err);
+    res.status(500).json({ error: 'Erreur serveur.' });
+  }
+});
+
+// POST /api/chat/conversations/:id/messages — réponse du staff
+app.post('/api/chat/conversations/:id/messages', requireAuth, requireAdmin, async (req, res) => {
+  const body = (req.body?.body || '').toString().trim();
+  if (!body) return res.status(400).json({ error: 'Message vide.' });
+  if (body.length > CHAT_BODY_MAX) return res.status(400).json({ error: 'Message trop long.' });
+  try {
+    const conv = await db.query(`SELECT * FROM chat_conversations WHERE id = $1`, [req.params.id]);
+    if (!conv.rows.length) return res.status(404).json({ error: 'Conversation introuvable.' });
+    const { rows } = await db.query(
+      `INSERT INTO chat_messages (conversation_id, sender, body, read_by_staff) VALUES ($1, 'staff', $2, TRUE) RETURNING id, sender, body, created_at`,
+      [req.params.id, body]
+    );
+    await db.query(`UPDATE chat_conversations SET last_message_at = NOW(), status = 'open' WHERE id = $1`, [req.params.id]);
+    const c = conv.rows[0];
+    logActivity(req, 'chat.reply', c.guest_email || ('user#' + c.user_id));
+
+    // Notifie l'utilisateur par email qu'il a une réponse.
+    let toEmail = c.guest_email, notify = !!c.guest_email;
+    if (c.user_id) {
+      const u = await db.query(`SELECT email, notif_email FROM users WHERE id = $1`, [c.user_id]);
+      if (u.rows.length) { toEmail = u.rows[0].email; notify = u.rows[0].notif_email !== false; }
+    }
+    if (notify && toEmail) {
+      resend.emails.send({
+        from: 'noreply@dujardin-delacour.com',
+        to: toEmail,
+        subject: 'Réponse de Dujardin Delacour & Cie',
+        html: emailLayout(`
+          <h2 style="font-family:Georgia,serif;font-size:1.1rem;font-weight:400;color:#1A1916;margin:0 0 6px;">Vous avez une réponse</h2>
+          <p style="font-size:0.75rem;letter-spacing:0.12em;text-transform:uppercase;color:#9A8E7E;margin:0 0 24px;">Notre équipe vous a répondu</p>
+          <p style="font-size:0.95rem;color:#1A1916;line-height:1.6;background:#EFECE5;padding:14px 16px;border-radius:6px;margin:0 0 20px;">${esc(body)}</p>
+          <a href="${APP_URL}" style="display:inline-block;background:#1A1916;color:#fff;text-decoration:none;font-size:0.8rem;letter-spacing:0.08em;text-transform:uppercase;padding:12px 22px;border-radius:4px;">Poursuivre la conversation</a>`),
+      }).catch(() => {});
+    }
+    res.status(201).json({ message: rows[0] });
+  } catch (err) {
+    console.error('Chat reply error:', err);
     res.status(500).json({ error: 'Erreur serveur.' });
   }
 });

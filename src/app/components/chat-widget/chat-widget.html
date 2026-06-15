@@ -1,0 +1,71 @@
+<!-- Panneau de discussion -->
+@if (open()) {
+  <div class="chat" role="dialog" [attr.aria-label]="fr ? 'Discussion' : 'Chat'">
+    <div class="chat__header">
+      <div class="chat__id">
+        <span class="chat__avatar">DJD</span>
+        <div class="chat__titles">
+          <span class="chat__name">Dujardin Delacour &amp; Cie</span>
+          <span class="chat__status"><span class="chat__dot"></span>{{ fr ? 'En ligne' : 'Online' }}</span>
+        </div>
+      </div>
+      <button class="chat__close" type="button" (click)="toggle()" [attr.aria-label]="fr ? 'Fermer' : 'Close'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="chat__body">
+      @for (m of view(); track m.key) {
+        <div class="chat__msg" [class.chat__msg--user]="m.from === 'user'">
+          <div class="chat__bubble">{{ m.text }}</div>
+          <span class="chat__time">{{ m.time }}</span>
+        </div>
+      }
+
+      <!-- FAQ rapide (tant qu'aucune conversation réelle n'est lancée) -->
+      @if (showFaq()) {
+        <div class="chat__faq">
+          <span class="chat__faq-label">{{ fr ? 'Questions fréquentes' : 'Frequent questions' }}</span>
+          @for (f of faqs; track f.q) {
+            <button class="chat__faq-chip" type="button" (click)="pickFaq(f)">{{ f.q }}</button>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Formulaire email (visiteur anonyme avant de parler à un conseiller) -->
+    @if (askEmail()) {
+      <div class="chat__email">
+        <p class="chat__email-intro">{{ fr ? 'Laissez votre email pour qu\'un conseiller vous réponde :' : 'Leave your email so an advisor can reply:' }}</p>
+        <input type="email" [(ngModel)]="guestEmail" (keydown.enter)="submitEmail()"
+               [placeholder]="fr ? 'votre@email.com' : 'your@email.com'" />
+        <input type="text" [(ngModel)]="guestName"
+               [placeholder]="fr ? 'Votre nom (facultatif)' : 'Your name (optional)'" />
+        <button class="chat__email-btn" type="button" (click)="submitEmail()">
+          {{ fr ? 'Continuer' : 'Continue' }}
+        </button>
+      </div>
+    }
+
+    <div class="chat__input">
+      <input type="text" [(ngModel)]="draft" (keydown.enter)="trySend()" [disabled]="sending()"
+             [placeholder]="fr ? 'Écrivez votre message…' : 'Type your message…'" />
+      <button type="button" (click)="trySend()" [disabled]="!draft.trim() || sending()" [attr.aria-label]="fr ? 'Envoyer' : 'Send'">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+}
+
+<!-- Bulle flottante -->
+<button class="chat-bubble" [class.chat-bubble--open]="open()" type="button" (click)="toggle()"
+        [attr.aria-label]="fr ? 'Ouvrir la discussion' : 'Open chat'">
+  @if (open()) {
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  } @else {
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+    @if (unread() > 0) {
+      <span class="chat-bubble__badge">{{ unread() > 9 ? '9+' : unread() }}</span>
+    }
+  }
+</button>

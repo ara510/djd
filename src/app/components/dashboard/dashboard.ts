@@ -1,4 +1,4 @@
-import { Component, HostListener, inject, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -7,6 +7,7 @@ import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
 import { VeilleService, VeilleItem } from '../../services/veille.service';
 import { AdminService, FeedbackItem, AdminUser } from '../../services/admin.service';
+import { ChatService, ChatConversation, ChatMessage } from '../../services/chat.service';
 import { VeilleIconComponent } from '../veille-icon/veille-icon';
 
 interface Option { value: string; fr: string; en: string; }
@@ -18,18 +19,122 @@ interface Option { value: string; fr: string; en: string; }
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnDestroy {
   lang   = inject(TranslationService);
   auth   = inject(AuthService);
   toast  = inject(ToastService);
   veille = inject(VeilleService);
   admin  = inject(AdminService);
+  chat   = inject(ChatService);
   private sanitizer = inject(DomSanitizer);
 
   closing = signal(false);
 
-  // Vue active (admin) : feed, retours, utilisateurs, statistiques, journal, corbeille
-  view = signal<'veille' | 'feedback' | 'users' | 'stats' | 'activity' | 'trash'>('veille');
+  // Vue active (admin) : feed, retours, messagerie, utilisateurs, statistiques, journal, corbeille
+  view = signal<'veille' | 'feedback' | 'messages' | 'users' | 'stats' | 'activity' | 'trash'>('veille');
+
+  // ── Messagerie (chat support) ──────────────────────────────────────────────
+  conversations = signal<ChatConversation[]>([]);
+  convLoading   = signal(false);
+  selectedConv  = signal<ChatConversation | null>(null);
+  chatMessages  = signal<ChatMessage[]>([]);
+  replyDraft    = '';
+  sendingReply  = signal(false);
+  chatUnread    = computed(() => this.conversations().reduce((s, c) => s + (c.unread || 0), 0));
+
+  private convPoll?:   ReturnType<typeof setInterval>;
+  private threadPoll?: ReturnType<typeof setInterval>;
+
+  constructor() {
+    // Rafraîchit la liste des conversations (badge + vue) tant que le dashboard est ouvert.
+    this.convPoll = setInterval(() => { if (this.isAdmin) this.loadConversations(true); }, 10_000);
+    if (this.isAdmin) this.loadConversations(true);
+  }
+
+  ngOnDestroy() {
+    clearInterval(this.convPoll);
+    clearInterval(this.threadPoll);
+  }
+
+  loadConversations(quiet = false) {
+    if (!quiet) this.convLoading.set(true);
+    this.chat.loadConversations().subscribe({
+      next: rows => { this.convLoading.set(false); this.conversations.set(rows); },
+      error: () => { this.convLoading.set(false); },
+    });
+  }
+
+  openConversation(c: ChatConversation) {
+    this.selectedConv.set(c);
+    this.replyDraft = '';
+    this.chatMessages.set([]);
+    this.loadThread(c.id);
+    this.startThreadPoll(c.id);
+  }
+
+  closeConversation() {
+    this.selectedConv.set(null);
+    this.stopThreadPoll();
+    this.loadConversations(true);
+  }
+
+  private loadThread(id: number, quiet = false) {
+    this.chat.loadConversation(id).subscribe({
+      next: res => {
+        const grew = res.messages.length > this.chatMessages().length;
+        this.chatMessages.set(res.messages);
+        const cur = this.selectedConv();
+        if (cur && cur.id === id) this.selectedConv.set({ ...cur, ...res.conversation });
+        this.markConvRead(id);
+        if (grew || !quiet) this.scrollChat();
+      },
+      error: () => {},
+    });
+  }
+
+  sendReply() {
+    const id = this.selectedConv()?.id;
+    const body = this.replyDraft.trim();
+    if (!id || !body || this.sendingReply()) return;
+    this.sendingReply.set(true);
+    this.chat.reply(id, body).subscribe({
+      next: res => {
+        this.chatMessages.update(m => [...m, res.message]);
+        this.replyDraft = '';
+        this.sendingReply.set(false);
+        this.scrollChat();
+      },
+      error: () => {
+        this.sendingReply.set(false);
+        this.toast.show(this.fr ? 'Échec de l\'envoi.' : 'Send failed.', 'error');
+      },
+    });
+  }
+
+  private markConvRead(id: number) {
+    this.conversations.update(list => list.map(c => c.id === id ? { ...c, unread: 0 } : c));
+  }
+  private startThreadPoll(id: number) {
+    this.stopThreadPoll();
+    this.threadPoll = setInterval(() => this.loadThread(id, true), 4000);
+  }
+  private stopThreadPoll() { if (this.threadPoll) { clearInterval(this.threadPoll); this.threadPoll = undefined; } }
+  private scrollChat() {
+    setTimeout(() => { const el = document.querySelector('.chatadm__messages'); if (el) el.scrollTop = el.scrollHeight; }, 50);
+  }
+
+  // Affichage d'une conversation dans la liste / l'en-tête.
+  convName(c: ChatConversation): string {
+    if (c.user_id) return `${c.prenoms || ''} ${c.nom || ''}`.trim() || ('@' + (c.username || ''));
+    return c.guest_name || c.guest_email || (this.fr ? 'Visiteur' : 'Visitor');
+  }
+  convSub(c: ChatConversation): string {
+    if (c.user_id) return '@' + (c.username || '') + (c.plan ? ' · ' + this.lang.t('sub.' + c.plan + '.short') : '');
+    return c.guest_email || (this.fr ? 'Visiteur anonyme' : 'Anonymous visitor');
+  }
+  convInitials(c: ChatConversation): string {
+    return (this.convName(c).trim()[0] || '?').toUpperCase();
+  }
 
   readonly activityMeta: Record<string, { fr: string; en: string; cat: string }> = {
     'veille.create': { fr: 'a créé une veille',        en: 'created a watch item',   cat: 'create' },
@@ -353,9 +458,11 @@ export class DashboardComponent {
   closeImage() { this.lightboxImage.set(null); }
 
   // ── Vue admin (Veille / Retours / Utilisateurs / Stats) ─────────────────
-  setView(v: 'veille' | 'feedback' | 'users' | 'stats' | 'activity' | 'trash') {
+  setView(v: 'veille' | 'feedback' | 'messages' | 'users' | 'stats' | 'activity' | 'trash') {
     this.view.set(v);
+    if (v !== 'messages') { this.selectedConv.set(null); this.stopThreadPoll(); }
     if (v === 'feedback') this.admin.loadFeedback();
+    if (v === 'messages') this.loadConversations();
     if (v === 'users')    this.admin.loadUsers();
     if (v === 'stats')    this.admin.loadStats();
     if (v === 'activity') this.admin.loadActivity();

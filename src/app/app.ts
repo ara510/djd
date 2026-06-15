@@ -6,6 +6,7 @@ import { DashboardComponent } from './components/dashboard/dashboard';
 import { AdminWelcomeComponent } from './components/admin-welcome/admin-welcome';
 import { VeillePublicComponent } from './components/veille-public/veille-public';
 import { OffersComponent } from './components/offers/offers';
+import { ChatWidgetComponent } from './components/chat-widget/chat-widget';
 import { CookieBannerComponent } from './components/cookie-banner/cookie-banner';
 import { PrivacyModalComponent } from './components/privacy-modal/privacy-modal';
 import { FeedbackModalComponent } from './components/feedback-modal/feedback-modal';
@@ -43,6 +44,7 @@ import { ProfileComponent }  from './components/profile/profile';
     AdminWelcomeComponent,
     VeillePublicComponent,
     OffersComponent,
+    ChatWidgetComponent,
   ],
   template: `
     <app-navbar
@@ -61,6 +63,7 @@ import { ProfileComponent }  from './components/profile/profile';
       <app-contact></app-contact>
     </main>
 
+    <app-chat-widget></app-chat-widget>
     <app-toast></app-toast>
 
     @if (showAuth()) {
