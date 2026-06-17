@@ -9,13 +9,14 @@ import { VeilleService, VeilleItem } from '../../services/veille.service';
 import { AdminService, FeedbackItem, AdminUser } from '../../services/admin.service';
 import { ChatService, ChatConversation, ChatMessage } from '../../services/chat.service';
 import { VeilleIconComponent } from '../veille-icon/veille-icon';
+import { SeenDirective } from './seen.directive';
 
 interface Option { value: string; fr: string; en: string; }
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, VeilleIconComponent],
+  imports: [CommonModule, FormsModule, VeilleIconComponent, SeenDirective],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
@@ -46,12 +47,15 @@ export class DashboardComponent implements OnDestroy {
   private threadPoll?: ReturnType<typeof setInterval>;
 
   constructor() {
+    // Verrouille le défilement de la page derrière l'overlay plein écran (évite le double scrollbar).
+    document.body.style.overflow = 'hidden';
     // Rafraîchit la liste des conversations (badge + vue) tant que le dashboard est ouvert.
     this.convPoll = setInterval(() => { if (this.isAdmin) this.loadConversations(true); }, 10_000);
     if (this.isAdmin) this.loadConversations(true);
   }
 
   ngOnDestroy() {
+    document.body.style.overflow = '';
     clearInterval(this.convPoll);
     clearInterval(this.threadPoll);
   }
@@ -175,7 +179,23 @@ export class DashboardComponent implements OnDestroy {
   showEditor = signal(false);
   editingId  = signal<number | null>(null);
   saving     = signal(false);
+  // Champs médias/lien repliés : on les révèle au clic sur leur bouton (gain de place).
+  showUrl    = signal(false);
+  showImages = signal(false);
+  showVideo  = signal(false);
   form = this.emptyForm();
+
+  /** Aligne l'affichage des champs médias/lien sur le contenu chargé. */
+  private syncMediaToggles() {
+    this.showUrl.set(!!this.form.url);
+    this.showImages.set(this.form.images.length > 0);
+    this.showVideo.set(!!this.form.video);
+  }
+
+  /** Annule l'ajout : vide le champ et replie sa section. */
+  cancelUrl()    { this.form.url = ''; this.showUrl.set(false); }
+  cancelImages() { this.form.images = []; this.form.imageDraft = ''; this.showImages.set(false); }
+  cancelVideo()  { this.form.video = ''; this.showVideo.set(false); }
   dateDisplay = ''; // date affichée/saisie en jj/mm/aaaa (form.published_at reste en ISO aaaa-mm-jj)
 
   // ── Date jj/mm/aaaa ↔ ISO aaaa-mm-jj ────────────────────────────────────
@@ -285,7 +305,7 @@ export class DashboardComponent implements OnDestroy {
 
   private emptyForm() {
     return {
-      title: '', sources: [] as string[], sourceDraft: '', source_types: [] as string[], social_network: '', sector: '',
+      title: '', sources: [] as string[], sourceDraft: '', source_types: [] as string[], social_network: '', sectors: [] as string[],
       url: '', excerpt: '', images: [] as string[], imageDraft: '', video: '', author: '', published_at: '', status: 'published' as 'draft' | 'published',
       pinned: false,
     };
@@ -310,8 +330,12 @@ export class DashboardComponent implements OnDestroy {
     if (item.sector) return this.sectorLabel(item.sector);
     return item.source || this.typeLabel(item.source_type);
   }
-  /** Faut-il afficher le secteur comme étiquette (quand il n'est pas déjà le titre) ? */
-  showSectorChip(item: VeilleItem): boolean { return !!item.title && !!item.sector; }
+  /** Liste des secteurs d'une veille (avec repli sur l'ancien champ unique). */
+  sectorsOf(item: VeilleItem): string[] {
+    return item.sectors?.length ? item.sectors : (item.sector ? [item.sector] : []);
+  }
+  /** Faut-il afficher les secteurs comme étiquettes (quand ils ne sont pas déjà le titre) ? */
+  showSectorChip(item: VeilleItem): boolean { return !!item.title && this.sectorsOf(item).length > 0; }
 
   typeLabel(value?: string | null): string {
     const o = this.sourceTypes.find(t => t.value === value);
@@ -347,6 +371,15 @@ export class DashboardComponent implements OnDestroy {
 
   removeSource(value: string) {
     this.form.sources = this.form.sources.filter(s => s !== value);
+  }
+
+  // ── Sélection multi-secteurs (éditeur) ───────────────────────────────────
+  hasSector(value: string): boolean { return this.form.sectors.includes(value); }
+  addSector(value: string) {
+    if (value && !this.form.sectors.includes(value)) this.form.sectors.push(value);
+  }
+  removeSector(value: string) {
+    this.form.sectors = this.form.sectors.filter(s => s !== value);
   }
 
   sectorLabel(value?: string | null): string {
@@ -412,6 +445,50 @@ export class DashboardComponent implements OnDestroy {
 
   setReadingFilter(f: 'all' | 'unread' | 'favorites') { this.readingFilter.set(f); }
 
+  // ── Mode d'affichage selon l'abonnement ────────────────────────────────────
+  //  grid        : Veille Générale (gratuite) — grille de cartes compactes (clic = détail)
+  //  sectorielle : Veille Sectorielle — veilles classées par date, rangées horizontales scrollables
+  //  feed        : Veille Dédiée — fil vertical, veilles affichées en entier (style Facebook, sans clic d'ouverture)
+  //  admin       : combiné Générale + Sectorielle (cartes compactes groupées par date, clic = détail)
+  get feedMode(): 'admin' | 'feed' | 'sectorielle' | 'grid' {
+    if (this.isAdmin) return 'admin';
+    if (this.userLevel >= 2) return 'feed';        // dédiée
+    if (this.userLevel === 1) return 'sectorielle';
+    return 'grid';                                 // générale (gratuite)
+  }
+
+  /** Veilles regroupées par date de publication (locale), les plus récentes en premier. */
+  get groupedByDate(): { key: string; label: string; items: VeilleItem[] }[] {
+    const map = new Map<string, VeilleItem[]>();
+    for (const it of this.displayedVeille) {
+      const key = this.localDateKey(it.published_at);
+      (map.get(key) ?? map.set(key, []).get(key)!).push(it);
+    }
+    return [...map.entries()]
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([key, items]) => ({ key, label: this.dateGroupLabel(key), items }));
+  }
+
+  private localDateKey(iso: string): string {
+    const d = new Date(iso);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  dateGroupLabel(key: string): string {
+    const [y, m, d] = key.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const diff = Math.round((today.getTime() - date.getTime()) / 86_400_000);
+    if (diff === 0) return this.fr ? "Aujourd'hui" : 'Today';
+    if (diff === 1) return this.fr ? 'Hier' : 'Yesterday';
+    return date.toLocaleDateString(this.fr ? 'fr-FR' : 'en-US', { day: '2-digit', month: 'long', year: 'numeric' });
+  }
+
+  /** Marque une veille comme lue (fil Dédiée : au défilement). */
+  markRead(item: VeilleItem) {
+    if (item.read) return;
+    this.veille.setState(item.id, { read: true }).subscribe({ error: () => {} });
+  }
+
   toggleFavorite(item: VeilleItem, e: Event) {
     e.stopPropagation();
     const fav = !item.favorite;
@@ -426,7 +503,7 @@ export class DashboardComponent implements OnDestroy {
   openDetail(item: VeilleItem) {
     this.selectedItem.set(item);
     this.galleryIndex.set(0);
-    if (!item.read) this.veille.setState(item.id, { read: true }).subscribe({ error: () => {} });
+    if (!this.isAdmin && !item.read) this.veille.setState(item.id, { read: true }).subscribe({ error: () => {} });
     // La liste ne renvoie que l'image principale + has_video : on charge le détail complet
     // (toutes les images + vidéo) à la demande.
     if (item.has_video || (item.images_count ?? 0) > 1) {
@@ -456,6 +533,19 @@ export class DashboardComponent implements OnDestroy {
 
   openImage(src?: string | null) { if (src) this.lightboxImage.set(src); }
   closeImage() { this.lightboxImage.set(null); }
+
+  // ── Galerie du fil Dédiée (un index par veille, plusieurs cartes ouvertes) ──
+  feedGallery = signal<Record<number, number>>({});
+  galleryFor(item: VeilleItem): number { return this.feedGallery()[item.id] ?? 0; }
+  feedPrev(item: VeilleItem) {
+    const n = this.detailImages(item).length;
+    if (n) this.feedGallery.update(g => ({ ...g, [item.id]: ((g[item.id] ?? 0) - 1 + n) % n }));
+  }
+  feedNext(item: VeilleItem) {
+    const n = this.detailImages(item).length;
+    if (n) this.feedGallery.update(g => ({ ...g, [item.id]: ((g[item.id] ?? 0) + 1) % n }));
+  }
+  setFeedGallery(item: VeilleItem, i: number) { this.feedGallery.update(g => ({ ...g, [item.id]: i })); }
 
   // ── Vue admin (Veille / Retours / Utilisateurs / Stats) ─────────────────
   setView(v: 'veille' | 'feedback' | 'messages' | 'users' | 'stats' | 'activity' | 'trash') {
@@ -562,6 +652,7 @@ export class DashboardComponent implements OnDestroy {
     this.editingId.set(null);
     this.form = this.emptyForm();
     this.dateDisplay = '';
+    this.syncMediaToggles();
     this.showEditor.set(true);
   }
 
@@ -572,7 +663,7 @@ export class DashboardComponent implements OnDestroy {
       sourceDraft: '',
       source_types: item.source_types?.length ? [...item.source_types] : (item.source_type ? [item.source_type] : []),
       social_network: item.social_network ?? '',
-      sector: item.sector ?? '',
+      sectors: item.sectors?.length ? [...item.sectors] : (item.sector ? [item.sector] : []),
       url: item.url ?? '',
       excerpt: item.excerpt ?? '',
       images: item.images?.length ? [...item.images] : (item.image ? [item.image] : []),
@@ -590,14 +681,15 @@ export class DashboardComponent implements OnDestroy {
     this.editingId.set(item.id);
     this.form = this.buildForm(item);
     this.dateDisplay = this.isoToDisplay(this.form.published_at);
+    this.syncMediaToggles();
     this.showEditor.set(true);
     // La liste ne renvoie que l'image principale + has_video : on charge le détail complet
     // pour ne pas perdre les images supplémentaires ni la vidéo à l'enregistrement.
     this.veille.getOne(item.id).subscribe({
       next: full => {
         if (this.editingId() !== item.id) return;
-        if (full.images?.length) this.form.images = [...full.images];
-        if (full.video) this.form.video = full.video;
+        if (full.images?.length) { this.form.images = [...full.images]; this.showImages.set(true); }
+        if (full.video) { this.form.video = full.video; this.showVideo.set(true); }
       },
       error: () => {},
     });
@@ -611,13 +703,14 @@ export class DashboardComponent implements OnDestroy {
     this.form = this.buildForm(item);
     this.form.pinned = false; // on n'épingle pas la copie
     this.dateDisplay = this.isoToDisplay(this.form.published_at);
+    this.syncMediaToggles();
     this.showEditor.set(true);
     // Charge images/vidéo complètes depuis l'original
     this.veille.getOne(item.id).subscribe({
       next: full => {
         if (this.editingId() !== null || !this.showEditor()) return;
-        if (full.images?.length) this.form.images = [...full.images];
-        if (full.video) this.form.video = full.video;
+        if (full.images?.length) { this.form.images = [...full.images]; this.showImages.set(true); }
+        if (full.video) { this.form.video = full.video; this.showVideo.set(true); }
       },
       error: () => {},
     });
@@ -705,7 +798,7 @@ export class DashboardComponent implements OnDestroy {
   videoIsLocal(): boolean { return this.form.video.startsWith('data:') || this.form.video.includes('/uploads/'); }
 
   save() {
-    if (this.saving() || !this.form.sector || !this.form.source_types.length) return;
+    if (this.saving() || !this.form.sectors.length || !this.form.source_types.length) return;
     this.saving.set(true);
     const body: Partial<VeilleItem> = {
       title: this.form.title.trim() || null,
@@ -716,7 +809,7 @@ export class DashboardComponent implements OnDestroy {
       pinned: this.form.pinned,
       video: this.form.video.trim() || null,
       author: this.form.source_types.includes('presse') ? (this.form.author.trim() || null) : null,
-      sector: this.form.sector,
+      sectors: this.form.sectors,
       url: this.form.url.trim() || null,
       excerpt: this.form.excerpt.trim() || null,
       images: this.form.images,

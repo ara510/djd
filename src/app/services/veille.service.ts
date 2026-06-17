@@ -13,6 +13,7 @@ export interface VeilleItem {
   source_types?: string[];
   social_network?: string | null;
   sector?: string | null;
+  sectors?: string[];
   url?: string | null;
   excerpt?: string | null;
   image?: string | null;

@@ -121,6 +121,8 @@ db.query(`ALTER TABLE veille_items ADD COLUMN IF NOT EXISTS author TEXT`).catch(
 db.query(`ALTER TABLE veille_items ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ`).catch(() => {});
 db.query(`ALTER TABLE veille_items ADD COLUMN IF NOT EXISTS source_types TEXT[]`).catch(() => {});
 db.query(`UPDATE veille_items SET source_types = ARRAY[source_type] WHERE source_types IS NULL`).catch(() => {});
+db.query(`ALTER TABLE veille_items ADD COLUMN IF NOT EXISTS sectors TEXT[]`).catch(() => {});
+db.query(`UPDATE veille_items SET sectors = ARRAY[sector] WHERE sectors IS NULL AND sector IS NOT NULL`).catch(() => {});
 db.query(`ALTER TABLE veille_items ADD COLUMN IF NOT EXISTS sources TEXT[]`).catch(() => {});
 db.query(`UPDATE veille_items SET sources = ARRAY[source] WHERE sources IS NULL AND source IS NOT NULL`).catch(() => {});
 db.query(`ALTER TABLE veille_items ADD COLUMN IF NOT EXISTS images TEXT[]`).catch(() => {});
@@ -1052,8 +1054,8 @@ app.get('/api/veille', requireAuth, async (req, res) => {
       const level   = PLAN_LEVEL[u.rows[0]?.plan] ?? 0;
       const allowed = sectorsForLevel(level);
       params.push(allowed);
-      // secteurs autorisés OU items sans secteur (actualité générale)
-      where.push(`(vi.sector IS NULL OR vi.sector = ANY($${params.length}))`);
+      // visible si l'item a au moins un secteur autorisé (chevauchement) OU aucun secteur (actualité générale)
+      where.push(`(vi.sectors IS NULL OR vi.sectors && $${params.length}::text[])`);
       // seules les veilles publiées sont visibles des abonnés (les brouillons restent internes)
       where.push(`vi.status = 'published'`);
       // les veilles programmées (date future) restent masquées jusqu'à leur date
@@ -1061,7 +1063,7 @@ app.get('/api/veille', requireAuth, async (req, res) => {
     }
 
     if (type)   { params.push(type);    where.push(`$${params.length} = ANY(vi.source_types)`); }
-    if (sector) { params.push(sector);  where.push(`vi.sector = $${params.length}`); }
+    if (sector) { params.push(sector);  where.push(`$${params.length} = ANY(vi.sectors)`); }
     if (q)      { params.push(`%${q}%`); where.push(`(vi.title ILIKE $${params.length} OR vi.excerpt ILIKE $${params.length} OR vi.source ILIKE $${params.length})`); }
     // Filtre par période (dates en heure locale Madagascar)
     if (from)   { params.push(from); where.push(`${dlocal('vi.published_at')} >= $${params.length}::date`); }
@@ -1069,7 +1071,7 @@ app.get('/api/veille', requireAuth, async (req, res) => {
     const clause = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
     const { rows } = await db.query(
-      `SELECT vi.id, vi.title, vi.source, vi.sources, vi.source_type, vi.source_types, vi.social_network, vi.sector, vi.url, vi.excerpt, vi.image, vi.author,
+      `SELECT vi.id, vi.title, vi.source, vi.sources, vi.source_type, vi.source_types, vi.social_network, vi.sector, vi.sectors, vi.url, vi.excerpt, vi.image, vi.images, vi.video, vi.author,
               COALESCE(array_length(vi.images, 1), 0) AS images_count,
               (vi.video IS NOT NULL) AS has_video,
               vi.status, vi.pinned, vi.published_at, ${scheduledSql('vi.published_at')} AS scheduled, vi.created_at,
@@ -1132,12 +1134,12 @@ app.get('/api/veille/public', async (req, res) => {
   try {
     const allowed = sectorsForLevel(0); // niveau Générale uniquement
     const { rows } = await db.query(
-      `SELECT id, title, source, source_type, source_types, social_network, sector, url, excerpt, image, author,
+      `SELECT id, title, source, source_type, source_types, social_network, sector, sectors, url, excerpt, image, author,
               COALESCE(array_length(images, 1), 0) AS images_count, (video IS NOT NULL) AS has_video,
               published_at
        FROM veille_items
        WHERE deleted_at IS NULL AND status = 'published' AND ${visibleSql('published_at')}
-         AND (sector IS NULL OR sector = ANY($1))
+         AND (sectors IS NULL OR sectors && $1::text[])
        ORDER BY pinned DESC, published_at DESC, id DESC
        LIMIT 30`,
       [allowed]
@@ -1155,7 +1157,7 @@ app.get('/api/veille/:id', requireAuth, async (req, res) => {
     const u = await db.query('SELECT plan, is_admin FROM users WHERE id = $1', [req.user.id]);
     const isAdmin = u.rows[0]?.is_admin;
     const { rows } = await db.query(
-      `SELECT id, title, source, sources, source_type, source_types, social_network, sector, url, excerpt, image, images, video, author,
+      `SELECT id, title, source, sources, source_type, source_types, social_network, sector, sectors, url, excerpt, image, images, video, author,
               status, pinned, published_at, ${scheduledSql('published_at')} AS scheduled, created_at
        FROM veille_items WHERE id = $1`,
       [req.params.id]
@@ -1163,9 +1165,10 @@ app.get('/api/veille/:id', requireAuth, async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Veille introuvable.' });
     const item = rows[0];
     if (!isAdmin) {
-      const level    = PLAN_LEVEL[u.rows[0]?.plan] ?? 0;
-      const allowed  = sectorsForLevel(level);
-      const sectorOk = !item.sector || allowed.includes(item.sector);
+      const level       = PLAN_LEVEL[u.rows[0]?.plan] ?? 0;
+      const allowed     = sectorsForLevel(level);
+      const itemSectors = item.sectors?.length ? item.sectors : (item.sector ? [item.sector] : []);
+      const sectorOk    = !itemSectors.length || itemSectors.some(s => allowed.includes(s));
       if (item.status !== 'published' || item.scheduled || !sectorOk)
         return res.status(403).json({ error: 'Accès non autorisé.' });
     }
@@ -1189,6 +1192,13 @@ function normalizeTypes(source_types, source_type) {
   return arr;
 }
 
+// Normalise les secteurs : tableau de secteurs valides, dédoublonnés (accepte l'ancien champ unique).
+function normalizeSectors(sectors, sector) {
+  let arr = Array.isArray(sectors) ? sectors : (sector ? [sector] : []);
+  arr = [...new Set(arr.filter(s => VEILLE_SECTORS.includes(s)))];
+  return arr;
+}
+
 // Normalise les comptes/pages/groupes : tableau de chaînes nettoyées, dédoublonnées.
 function normalizeSources(sources, source) {
   let arr = Array.isArray(sources) ? sources : (source ? [source] : []);
@@ -1201,6 +1211,14 @@ function normalizeImages(images, image) {
   let arr = Array.isArray(images) ? images : (image ? [image] : []);
   arr = arr.map(s => (typeof s === 'string' ? s.trim() : '')).filter(Boolean);
   return arr.slice(0, 10);
+}
+
+// Une date seule (aaaa-mm-jj) est ancrée à MIDI UTC : la date du calendrier reste
+// identique quel que soit le fuseau d'affichage (corrige le décalage -1 jour à l'édition).
+function normalizePublishedAt(v) {
+  if (!v) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return `${v}T12:00:00Z`;
+  return v;
 }
 
 // POST /api/upload — upload de médias (images/vidéos) sur disque (admin DJD)
@@ -1216,10 +1234,12 @@ app.post('/api/upload', requireAuth, requireAdmin, upload.array('files', 10), (r
 
 // POST /api/veille — créer (admin DJD)
 app.post('/api/veille', requireAuth, requireAdmin, async (req, res) => {
-  let { title, source, sources, source_type, source_types, social_network, sector, url, excerpt, image, images, video, author, published_at, status, pinned } = req.body;
+  let { title, source, sources, source_type, source_types, social_network, sector, sectors, url, excerpt, image, images, video, author, published_at, status, pinned } = req.body;
   const types = normalizeTypes(source_types, source_type);
   if (!types.length) return res.status(400).json({ error: 'Au moins un type de source est requis.' });
-  if (!VEILLE_SECTORS.includes(sector)) return res.status(400).json({ error: 'Le secteur est requis.' });
+  const sectorsArr = normalizeSectors(sectors, sector);
+  if (!sectorsArr.length) return res.status(400).json({ error: 'Au moins un secteur est requis.' });
+  const sectorPrimary = sectorsArr[0];
   if (!['draft', 'published'].includes(status)) status = 'published';
   const primary = types[0];
   const srcArr = normalizeSources(sources, source);
@@ -1230,10 +1250,10 @@ app.post('/api/veille', requireAuth, requireAdmin, async (req, res) => {
   const authorVal = types.includes('presse') ? (author?.trim() || null) : null;
   try {
     const { rows } = await db.query(
-      `INSERT INTO veille_items (title, source, sources, source_type, source_types, social_network, sector, url, excerpt, image, images, video, author, status, pinned, published_at, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,COALESCE($16, NOW()),$17)
-       RETURNING id, title, source, sources, source_type, source_types, social_network, sector, url, excerpt, image, video, author, status, pinned, published_at, ${scheduledSql('published_at')} AS scheduled, created_at`,
-      [title?.trim() || null, srcJoined, srcArr, primary, types, social_network, sector, url || null, excerpt || null, imgPrimary, imgArr, video || null, authorVal, status, !!pinned, published_at || null, req.user.id]
+      `INSERT INTO veille_items (title, source, sources, source_type, source_types, social_network, sector, sectors, url, excerpt, image, images, video, author, status, pinned, published_at, created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,COALESCE($17, NOW()),$18)
+       RETURNING id, title, source, sources, source_type, source_types, social_network, sector, sectors, url, excerpt, image, video, author, status, pinned, published_at, ${scheduledSql('published_at')} AS scheduled, created_at`,
+      [title?.trim() || null, srcJoined, srcArr, primary, types, social_network, sectorPrimary, sectorsArr, url || null, excerpt || null, imgPrimary, imgArr, video || null, authorVal, status, !!pinned, normalizePublishedAt(published_at), req.user.id]
     );
     logActivity(req, 'veille.create', rows[0].source);
     res.status(201).json(rows[0]);
@@ -1245,10 +1265,12 @@ app.post('/api/veille', requireAuth, requireAdmin, async (req, res) => {
 
 // PATCH /api/veille/:id — modifier (admin DJD)
 app.patch('/api/veille/:id', requireAuth, requireAdmin, async (req, res) => {
-  let { title, source, sources, source_type, source_types, social_network, sector, url, excerpt, image, images, video, author, published_at, status, pinned } = req.body;
+  let { title, source, sources, source_type, source_types, social_network, sector, sectors, url, excerpt, image, images, video, author, published_at, status, pinned } = req.body;
   const types = normalizeTypes(source_types, source_type);
   if (!types.length) return res.status(400).json({ error: 'Au moins un type de source est requis.' });
-  if (!VEILLE_SECTORS.includes(sector)) return res.status(400).json({ error: 'Le secteur est requis.' });
+  const sectorsArr = normalizeSectors(sectors, sector);
+  if (!sectorsArr.length) return res.status(400).json({ error: 'Au moins un secteur est requis.' });
+  const sectorPrimary = sectorsArr[0];
   if (!['draft', 'published'].includes(status)) status = 'published';
   const primary = types[0];
   const srcArr = normalizeSources(sources, source);
@@ -1260,10 +1282,10 @@ app.patch('/api/veille/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const before = await db.query('SELECT images, video FROM veille_items WHERE id = $1', [req.params.id]);
     const { rows } = await db.query(
-      `UPDATE veille_items SET title=$1, source=$2, sources=$3, source_type=$4, source_types=$5, social_network=$6, sector=$7, url=$8, excerpt=$9, image=$10, images=$11, video=$12, author=$13, status=$14, pinned=$15, published_at=COALESCE($16, published_at)
-       WHERE id=$17
-       RETURNING id, title, source, sources, source_type, source_types, social_network, sector, url, excerpt, image, video, author, status, pinned, published_at, ${scheduledSql('published_at')} AS scheduled, created_at`,
-      [title?.trim() || null, srcJoined, srcArr, primary, types, social_network, sector, url || null, excerpt || null, imgPrimary, imgArr, video || null, authorVal, status, !!pinned, published_at || null, req.params.id]
+      `UPDATE veille_items SET title=$1, source=$2, sources=$3, source_type=$4, source_types=$5, social_network=$6, sector=$7, sectors=$8, url=$9, excerpt=$10, image=$11, images=$12, video=$13, author=$14, status=$15, pinned=$16, published_at=COALESCE($17, published_at)
+       WHERE id=$18
+       RETURNING id, title, source, sources, source_type, source_types, social_network, sector, sectors, url, excerpt, image, video, author, status, pinned, published_at, ${scheduledSql('published_at')} AS scheduled, created_at`,
+      [title?.trim() || null, srcJoined, srcArr, primary, types, social_network, sectorPrimary, sectorsArr, url || null, excerpt || null, imgPrimary, imgArr, video || null, authorVal, status, !!pinned, normalizePublishedAt(published_at), req.params.id]
     );
     if (!rows.length) return res.status(404).json({ error: 'Veille introuvable.' });
     // Médias retirés lors de l'édition → corbeille fichiers
