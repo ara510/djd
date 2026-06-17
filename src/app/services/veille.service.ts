@@ -14,6 +14,7 @@ export interface VeilleItem {
   social_network?: string | null;
   sector?: string | null;
   sectors?: string[];
+  tone?: 'positif' | 'neutre' | 'negatif' | null;
   url?: string | null;
   excerpt?: string | null;
   image?: string | null;

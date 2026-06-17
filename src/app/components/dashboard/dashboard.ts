@@ -248,6 +248,17 @@ export class DashboardComponent implements OnDestroy {
     { value: 'linkedin',  label: 'LinkedIn'  },
   ];
 
+  // Indicateur de ton (cf. PDF de veille) : ● Positif ● Neutre/Informatif ● Négatif/Sensible
+  readonly tones: Option[] = [
+    { value: 'positif', fr: 'Positif',           en: 'Positive'         },
+    { value: 'neutre',  fr: 'Neutre / Informatif', en: 'Neutral / Info'  },
+    { value: 'negatif', fr: 'Négatif / Sensible',  en: 'Negative / Sensitive' },
+  ];
+  toneLabel(value?: string | null): string {
+    const o = this.tones.find(t => t.value === value);
+    return o ? (this.fr ? o.fr : o.en) : '';
+  }
+
   readonly sectors: Option[] = [
     { value: 'politique',     fr: 'Politique',     en: 'Politics'     },
     { value: 'economie',      fr: 'Économie',      en: 'Economy'      },
@@ -305,7 +316,7 @@ export class DashboardComponent implements OnDestroy {
 
   private emptyForm() {
     return {
-      title: '', sources: [] as string[], sourceDraft: '', source_types: [] as string[], social_network: '', sectors: [] as string[],
+      title: '', sources: [] as string[], sourceDraft: '', source_types: [] as string[], social_network: '', sectors: [] as string[], tone: '',
       url: '', excerpt: '', images: [] as string[], imageDraft: '', video: '', author: '', published_at: '', status: 'published' as 'draft' | 'published',
       pinned: false,
     };
@@ -664,6 +675,7 @@ export class DashboardComponent implements OnDestroy {
       source_types: item.source_types?.length ? [...item.source_types] : (item.source_type ? [item.source_type] : []),
       social_network: item.social_network ?? '',
       sectors: item.sectors?.length ? [...item.sectors] : (item.sector ? [item.sector] : []),
+      tone: item.tone ?? '',
       url: item.url ?? '',
       excerpt: item.excerpt ?? '',
       images: item.images?.length ? [...item.images] : (item.image ? [item.image] : []),
@@ -810,6 +822,7 @@ export class DashboardComponent implements OnDestroy {
       video: this.form.video.trim() || null,
       author: this.form.source_types.includes('presse') ? (this.form.author.trim() || null) : null,
       sectors: this.form.sectors,
+      tone: (this.form.tone || null) as VeilleItem['tone'],
       url: this.form.url.trim() || null,
       excerpt: this.form.excerpt.trim() || null,
       images: this.form.images,

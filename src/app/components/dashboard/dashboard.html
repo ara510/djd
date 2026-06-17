@@ -539,6 +539,7 @@
                   @if (showSectorChip(item)) {
                     @for (sec of sectorsOf(item); track sec) { <span class="dash-card__sector">{{ sectorLabel(sec) }}</span> }
                   }
+                  @if (item.tone) { <span class="dash-tone-chip" [attr.data-tone]="item.tone" [attr.title]="toneLabel(item.tone)"><span class="dash-tone__dot"></span>{{ toneLabel(item.tone) }}</span> }
                   @if (item.has_video) {
                     <span class="dash-card__video-chip" [attr.title]="fr ? 'Contient une vidéo' : 'Has a video'">
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -621,6 +622,7 @@
                       </span>
                     }
                     @if (showSectorChip(item)) { @for (sec of sectorsOf(item); track sec) { <span class="dash-card__sector">{{ sectorLabel(sec) }}</span> } }
+          @if (item.tone) { <span class="dash-tone-chip" [attr.data-tone]="item.tone" [attr.title]="toneLabel(item.tone)"><span class="dash-tone__dot"></span>{{ toneLabel(item.tone) }}</span> }
                     <span class="feed-card__date">{{ item.published_at | date:'dd/MM/yy' }}</span>
                     <button class="feed-card__fav" [class.feed-card__fav--on]="item.favorite" type="button"
                             (click)="toggleFavorite(item, $event)"
@@ -797,6 +799,19 @@
             </div>
           </div>
         }
+
+        <div class="dash-field">
+          <label class="dash-field__label">{{ fr ? 'Ton' : 'Tone' }} <span class="dash-field__hint">{{ fr ? '(facultatif)' : '(optional)' }}</span></label>
+          <div class="dash-tone-picker">
+            @for (t of tones; track t.value) {
+              <button type="button" class="dash-tone" [class.dash-tone--active]="form.tone === t.value"
+                      [attr.data-tone]="t.value" (click)="form.tone = form.tone === t.value ? '' : t.value">
+                <span class="dash-tone__dot"></span>
+                {{ fr ? t.fr : t.en }}
+              </button>
+            }
+          </div>
+        </div>
 
         <div class="dash-field__row">
           <div class="dash-field">
@@ -1014,6 +1029,7 @@
             </span>
           }
           @if (showSectorChip(item)) { @for (sec of sectorsOf(item); track sec) { <span class="dash-card__sector">{{ sectorLabel(sec) }}</span> } }
+          @if (item.tone) { <span class="dash-tone-chip" [attr.data-tone]="item.tone" [attr.title]="toneLabel(item.tone)"><span class="dash-tone__dot"></span>{{ toneLabel(item.tone) }}</span> }
           <span class="dash-card__date">{{ item.published_at | date:'dd/MM/yy' }}</span>
         </div>
 
