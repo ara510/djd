@@ -389,6 +389,12 @@ export class DashboardComponent implements OnDestroy {
     this.form.source_types = this.form.source_types.filter(t => t !== value);
   }
 
+  /** Bascule un type secondaire (TV / Radio) en Veille Presse. */
+  toggleSourceType(value: string) {
+    if (this.form.source_types.includes(value)) this.removeSourceType(value);
+    else this.addSourceType(value);
+  }
+
   // ── Comptes / Pages / Groupes (saisie multiple, Entrée pour ajouter) ─────
   addSource() {
     const v = this.form.sourceDraft.trim();

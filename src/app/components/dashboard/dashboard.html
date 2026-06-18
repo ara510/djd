@@ -792,6 +792,22 @@
           </div>
         </div>
 
+        @if (formChannel() === 'presse') {
+          <div class="dash-field">
+            <label class="dash-field__label">{{ fr ? 'Inclure aussi' : 'Also include' }} <span class="dash-field__hint">{{ fr ? '(en plus de la presse écrite, facultatif)' : '(in addition to written press, optional)' }}</span></label>
+            <div class="dash-media-btns">
+              <button type="button" class="dash-media-btn" [class.dash-media-btn--active]="hasSourceType('tv')" (click)="toggleSourceType('tv')">
+                <app-veille-icon [type]="'tv'"></app-veille-icon>
+                {{ fr ? 'Télévision' : 'TV' }}
+              </button>
+              <button type="button" class="dash-media-btn" [class.dash-media-btn--active]="hasSourceType('radio')" (click)="toggleSourceType('radio')">
+                <app-veille-icon [type]="'radio'"></app-veille-icon>
+                {{ fr ? 'Radio' : 'Radio' }}
+              </button>
+            </div>
+          </div>
+        }
+
         @if (formChannel() === 'digital') {
           <div class="dash-field">
             <label class="dash-field__label">{{ fr ? 'Réseau social' : 'Social network' }}</label>
