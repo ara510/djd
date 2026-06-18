@@ -2208,3 +2208,6 @@
   &[data-channel="digital"] { border-color: rgba(47, 111, 176, 0.35);  background: rgba(47, 111, 176, 0.06); }
   &[data-channel="presse"]  { border-color: rgba(46, 139, 107, 0.35);  background: rgba(46, 139, 107, 0.06); }
 }
+
+/* Icône de type dans un bouton média (TV/Radio) : taille bornée (sinon elle remplit tout) */
+.dash-media-btn app-veille-icon { width: 16px; height: 16px; display: inline-flex; flex-shrink: 0; }
