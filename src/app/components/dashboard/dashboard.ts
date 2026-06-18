@@ -51,7 +51,8 @@ export class DashboardComponent implements OnDestroy {
     document.body.style.overflow = 'hidden';
     // Rafraîchit la liste des conversations (badge + vue) tant que le dashboard est ouvert.
     this.convPoll = setInterval(() => { if (this.isAdmin) this.loadConversations(true); }, 10_000);
-    if (this.isAdmin) { this.loadConversations(true); this.veille.load(this.currentFilters()); }
+    if (this.isAdmin) this.loadConversations(true);
+    if (this.hasChannels) this.veille.load(this.currentFilters());  // feed filtré sur le canal par défaut (Presse)
   }
 
   ngOnDestroy() {
@@ -299,6 +300,16 @@ export class DashboardComponent implements OnDestroy {
     return this.isAdmin ? 99 : (this.PLAN_LEVEL[this.plan] ?? 0);
   }
 
+  /** Canaux Presse/Digital : admin + abonnés Sectorielle/Dédiée (pas la Générale). */
+  get hasChannels(): boolean { return this.userLevel >= 1; }
+
+  /** Types affichés sur une carte, filtrés selon le canal courant (Presse cache le social, Digital cache la presse). */
+  displayTypes(item: VeilleItem): string[] {
+    const types = this.typesOf(item);
+    if (!this.hasChannels) return types;
+    return this.channel() === 'digital' ? types.filter(t => t === 'social') : types.filter(t => t !== 'social');
+  }
+
   canAccessSector(value: string): boolean {
     return this.userLevel >= (this.SECTOR_MIN_LEVEL[value] ?? 0);
   }
@@ -425,9 +436,9 @@ export class DashboardComponent implements OnDestroy {
 
   // ── Filtres ──────────────────────────────────────────────────────────────
   private currentFilters() {
-    // Côté admin, le type est imposé par le canal (Presse = presse écrite, Digital = réseaux sociaux).
+    // Avec canaux (admin + Sectorielle/Dédiée), le type est imposé par le canal.
     return {
-      type: this.isAdmin ? this.channelType() : this.activeType(),
+      type: this.hasChannels ? this.channelType() : this.activeType(),
       sector: this.activeSector(), q: this.search.trim(),
       from: this.dateFrom(), to: this.dateTo(),
     };
