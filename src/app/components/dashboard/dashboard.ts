@@ -51,7 +51,7 @@ export class DashboardComponent implements OnDestroy {
     document.body.style.overflow = 'hidden';
     // Rafraîchit la liste des conversations (badge + vue) tant que le dashboard est ouvert.
     this.convPoll = setInterval(() => { if (this.isAdmin) this.loadConversations(true); }, 10_000);
-    if (this.isAdmin) this.loadConversations(true);
+    if (this.isAdmin) { this.loadConversations(true); this.veille.load(this.currentFilters()); }
   }
 
   ngOnDestroy() {
@@ -166,6 +166,11 @@ export class DashboardComponent implements OnDestroy {
     { value: 'bug',        fr: 'Bug / Erreur', en: 'Bug report' },
     { value: 'suggestion', fr: 'Suggestion',   en: 'Suggestion' },
   ];
+
+  // Canal de veille (admin) : Presse (presse écrite) ou Digital (réseaux sociaux)
+  channel     = signal<'presse' | 'digital'>('presse');
+  formChannel = signal<'presse' | 'digital'>('presse'); // canal du formulaire d'édition en cours
+  channelType(): string { return this.channel() === 'digital' ? 'social' : 'presse'; }
 
   // Filtres
   activeType   = signal<string | null>(null);
@@ -410,10 +415,20 @@ export class DashboardComponent implements OnDestroy {
     }));
   }
 
+  // ── Canal Presse / Digital (admin) ──────────────────────────────────────
+  setChannel(c: 'presse' | 'digital') {
+    this.channel.set(c);
+    this.view.set('veille');
+    this.activeSector.set(null);   // on repart d'une vue propre en changeant de canal
+    this.veille.load(this.currentFilters());
+  }
+
   // ── Filtres ──────────────────────────────────────────────────────────────
   private currentFilters() {
+    // Côté admin, le type est imposé par le canal (Presse = presse écrite, Digital = réseaux sociaux).
     return {
-      type: this.activeType(), sector: this.activeSector(), q: this.search.trim(),
+      type: this.isAdmin ? this.channelType() : this.activeType(),
+      sector: this.activeSector(), q: this.search.trim(),
       from: this.dateFrom(), to: this.dateTo(),
     };
   }
@@ -662,6 +677,9 @@ export class DashboardComponent implements OnDestroy {
   openNew() {
     this.editingId.set(null);
     this.form = this.emptyForm();
+    // Type imposé par le canal : Presse → presse écrite ; Digital → réseau social.
+    this.formChannel.set(this.channel());
+    this.form.source_types = this.channel() === 'digital' ? ['social'] : ['presse'];
     this.dateDisplay = '';
     this.syncMediaToggles();
     this.showEditor.set(true);
@@ -688,10 +706,16 @@ export class DashboardComponent implements OnDestroy {
     };
   }
 
+  /** Canal d'une veille selon son type : réseau social → digital, sinon presse. */
+  channelOf(item: VeilleItem): 'presse' | 'digital' {
+    return this.typesOf(item).includes('social') ? 'digital' : 'presse';
+  }
+
   openEdit(item: VeilleItem) {
     this.selectedItem.set(null);
     this.editingId.set(item.id);
     this.form = this.buildForm(item);
+    this.formChannel.set(this.channelOf(item));
     this.dateDisplay = this.isoToDisplay(this.form.published_at);
     this.syncMediaToggles();
     this.showEditor.set(true);
@@ -713,6 +737,7 @@ export class DashboardComponent implements OnDestroy {
     this.selectedItem.set(null);
     this.editingId.set(null); // mode création → l'enregistrement crée une copie
     this.form = this.buildForm(item);
+    this.formChannel.set(this.channelOf(item));
     this.form.pinned = false; // on n'épingle pas la copie
     this.dateDisplay = this.isoToDisplay(this.form.published_at);
     this.syncMediaToggles();

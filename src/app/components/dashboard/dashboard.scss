@@ -2192,3 +2192,19 @@
   &[data-tone="negatif"] { color: #c0392b; border-color: rgba(192, 57, 43, 0.4);   background: rgba(192, 57, 43, 0.08); }
   &[data-tone="negatif"] .dash-tone__dot { background: #c0392b; }
 }
+
+/* ─── Étiquette de canal (Presse / Digital) dans l'éditeur ─────────────────── */
+.dash-channel-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: rgba(26, 25, 22, 0.03);
+  font-size: 0.82rem;
+  color: var(--color-ink);
+  &__icon { width: 16px; height: 16px; display: inline-flex; color: var(--color-accent); }
+  &[data-channel="digital"] { border-color: rgba(47, 111, 176, 0.35);  background: rgba(47, 111, 176, 0.06); }
+  &[data-channel="presse"]  { border-color: rgba(46, 139, 107, 0.35);  background: rgba(46, 139, 107, 0.06); }
+}
