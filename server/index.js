@@ -214,6 +214,23 @@ db.query(`
   )
 `).catch(() => {});
 db.query(`CREATE INDEX IF NOT EXISTS idx_chat_msg_conv ON chat_messages(conversation_id)`).catch(() => {});
+// Alertes « Option » (temps réel / récapitulatif quotidien / bulletin hebdomadaire).
+// Diffusées par email à la publication ; visibles dans le dashboard admin uniquement.
+db.query(`
+  CREATE TABLE IF NOT EXISTS alerts (
+    id           SERIAL PRIMARY KEY,
+    kind         VARCHAR(20) NOT NULL DEFAULT 'realtime',
+    title        TEXT NOT NULL,
+    source       TEXT,
+    url          TEXT,
+    context      TEXT,
+    published_at TIMESTAMPTZ DEFAULT NOW(),
+    created_by   INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at   TIMESTAMPTZ DEFAULT NOW()
+  )
+`).catch(() => {});
+db.query(`CREATE INDEX IF NOT EXISTS idx_alerts_kind ON alerts(kind)`).catch(() => {});
+db.query(`ALTER TABLE alerts ADD COLUMN IF NOT EXISTS payload JSONB`).catch(() => {}); // récap quotidien / bulletin hebdo (rubriques + faits)
 
 // ─── JWT middleware ────────────────────────────────────────────────────────────
 function requireAuth(req, res, next) {
@@ -1021,14 +1038,14 @@ app.post('/api/chat/conversations/:id/messages', requireAuth, requireAdmin, asyn
 // ─── Veille (dashboard) ───────────────────────────────────────────────────────
 const VEILLE_TYPES    = ['web', 'social', 'radio', 'tv', 'presse'];
 const SOCIAL_NETWORKS = ['facebook', 'youtube', 'instagram', 'x', 'linkedin'];
-const VEILLE_SECTORS  = ['politique','economie','international','social','environnement','agriculture','tourisme','btp','mines','telecoms','biodiversite','autre'];
+const VEILLE_SECTORS  = ['politique','economie','international','social','environnement','agriculture','tourisme','btp','mines','telecoms','autre'];
 
 // Gating par abonnement : niveau minimal requis par secteur (0=générale, 1=sectorielle, 2=dédiée)
 const PLAN_LEVEL = { generale: 0, sectorielle: 1, dediee: 2 };
 const SECTOR_MIN_LEVEL = {
   politique: 0, economie: 0, international: 0, social: 0, autre: 0,
   environnement: 1, agriculture: 1, tourisme: 1, btp: 1,
-  mines: 2, telecoms: 2, biodiversite: 2,
+  mines: 2, telecoms: 2,
 };
 const sectorsForLevel = (level) =>
   VEILLE_SECTORS.filter(s => (SECTOR_MIN_LEVEL[s] ?? 0) <= level);
@@ -1367,6 +1384,178 @@ app.delete('/api/veille/:id/permanent', requireAuth, requireAdmin, async (req, r
     res.json({ success: true });
   } catch (err) {
     console.error('Veille purge error:', err);
+    res.status(500).json({ error: 'Erreur serveur.' });
+  }
+});
+
+// ─── Alertes « Option » (temps réel) ─────────────────────────────────────────
+const ALERT_KINDS = ['realtime', 'daily', 'weekly'];
+
+// Construit le HTML d'une alerte temps réel (même charte que les autres emails).
+function alertEmailHtml(a) {
+  const dateStr = a.published_at
+    ? new Date(a.published_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric', timeZone: APP_TZ })
+    : '';
+  let sourceLine = '';
+  if (a.source || a.url) {
+    const label = esc(a.source || 'Lien');
+    const value = a.url ? `<a href="${esc(a.url)}" style="color:#8B6B3D;">${label}</a>` : label;
+    sourceLine = `<p style="font-size:0.85rem;color:#6B6560;margin:20px 0 0;"><strong style="color:#9A8E7E;">Source :</strong> ${value}</p>`;
+  }
+  return emailLayout(`
+    <p style="font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;color:#B23A2E;font-weight:700;margin:0 0 12px;">⚡ Alerte — temps réel</p>
+    ${dateStr ? `<p style="font-size:0.78rem;color:#9A8E7E;margin:0 0 6px;">${dateStr}</p>` : ''}
+    <h2 style="font-family:Georgia,serif;font-size:1.15rem;font-weight:400;color:#1A1916;line-height:1.45;margin:0 0 16px;">${esc(a.title)}</h2>
+    ${a.context ? `<p style="font-size:0.95rem;color:#3A352F;line-height:1.7;white-space:pre-line;margin:0;">${esc(a.context)}</p>` : ''}
+    ${sourceLine}
+  `);
+}
+
+const clip = (v, max) => (typeof v === 'string' ? v : '').trim().slice(0, max);
+
+// Rubriques → faits (date facultative pour le bulletin hebdo, texte, sources, lien). Partagé récap/bulletin.
+function normalizeRubriques(rubriques) {
+  return (Array.isArray(rubriques) ? rubriques : []).map(r => ({
+    name: clip(r?.name, 120),
+    facts: (Array.isArray(r?.facts) ? r.facts : []).map(f => ({
+      date:    clip(f?.date, 20),
+      text:    clip(f?.text, 2000),
+      sources: clip(f?.sources, 300),
+      url:     clip(f?.url, 500),
+    })).filter(f => f.text),
+  })).filter(r => r.name || r.facts.length);
+}
+
+// Récapitulatif quotidien : rubriques + faits à suivre.
+function normalizeRecapPayload(payload) {
+  if (!payload || typeof payload !== 'object') return null;
+  return { rubriques: normalizeRubriques(payload.rubriques), follow_up: clip(payload.follow_up, 1000) };
+}
+
+// Bulletin hebdomadaire : période + résumé exécutif + rubriques + tendances + signaux d'alerte.
+function normalizeBulletinPayload(payload) {
+  if (!payload || typeof payload !== 'object') return null;
+  return {
+    period_from: clip(payload.period_from, 20),
+    period_to:   clip(payload.period_to, 20),
+    summary:     clip(payload.summary, 3000),
+    rubriques:   normalizeRubriques(payload.rubriques),
+    trends:      clip(payload.trends, 2000),
+    signals:     clip(payload.signals, 2000),
+  };
+}
+
+// Diffuse un email à tous les abonnés (hors comptes DJD), par paquets de 45 en BCC. Renvoie le nb de destinataires.
+async function broadcastToSubscribers(subject, html) {
+  const { rows } = await db.query(
+    `SELECT email FROM users WHERE is_admin = FALSE AND deleted_at IS NULL AND notif_email <> FALSE AND email IS NOT NULL`
+  );
+  const recipients = [...new Set(rows.map(r => r.email.trim().toLowerCase()).filter(Boolean))];
+  if (!recipients.length) return 0;
+  for (let i = 0; i < recipients.length; i += 45) {
+    resend.emails.send({
+      from:    'noreply@dujardin-delacour.com',
+      to:      'noreply@dujardin-delacour.com',
+      bcc:     recipients.slice(i, i + 45),
+      subject,
+      html,
+    }).catch(err => console.error('Broadcast email error:', err));
+  }
+  return recipients.length;
+}
+
+// GET /api/alerts?kind= — temps réel : admin uniquement ; récap/bulletin : tous les abonnés.
+app.get('/api/alerts', requireAuth, async (req, res) => {
+  const kind = ALERT_KINDS.includes(req.query.kind) ? req.query.kind : 'realtime';
+  try {
+    const u = await db.query('SELECT is_admin FROM users WHERE id = $1', [req.user.id]);
+    const isAdmin = u.rows[0]?.is_admin;
+    if (kind === 'realtime' && !isAdmin) return res.status(403).json({ error: 'Accès réservé à l\'équipe DJD.' });
+    const where  = ['kind = $1'];
+    const params = [kind];
+    if (!isAdmin) where.push(visibleSql('published_at')); // un abonné ne voit pas une publication post-datée
+    const { rows } = await db.query(
+      `SELECT id, kind, title, source, url, context, payload, published_at, created_at
+       FROM alerts WHERE ${where.join(' AND ')} ORDER BY published_at DESC, id DESC LIMIT 200`,
+      params
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Alerts list error:', err);
+    res.status(500).json({ error: 'Erreur serveur.' });
+  }
+});
+
+// Valide le corps d'une alerte/récap/bulletin selon son type. Renvoie { error } ou { title, payload }.
+function prepareAlert(kind, body) {
+  if (kind === 'realtime') {
+    if (!body.title?.trim()) return { error: 'Le titre est requis.' };
+    return { title: body.title.trim(), payload: null };
+  }
+  const payload = kind === 'weekly' ? normalizeBulletinPayload(body.payload) : normalizeRecapPayload(body.payload);
+  if (!payload || !payload.rubriques.some(r => r.facts.length))
+    return { error: 'Ajoutez au moins une rubrique contenant un fait.' };
+  const fallback = kind === 'daily' ? 'Récapitulatif quotidien' : 'Bulletin hebdomadaire';
+  return { title: (body.title?.trim() || fallback), payload };
+}
+
+// POST /api/alerts — créer + diffuser par email (admin DJD)
+app.post('/api/alerts', requireAuth, requireAdmin, async (req, res) => {
+  let { kind, source, url, context, published_at } = req.body;
+  kind = ALERT_KINDS.includes(kind) ? kind : 'realtime';
+  const prep = prepareAlert(kind, req.body);
+  if (prep.error) return res.status(400).json({ error: prep.error });
+  try {
+    const { rows } = await db.query(
+      `INSERT INTO alerts (kind, title, source, url, context, payload, published_at, created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,COALESCE($7, NOW()),$8)
+       RETURNING id, kind, title, source, url, context, payload, published_at, created_at`,
+      [kind, prep.title, source?.trim() || null, url?.trim() || null, context?.trim() || null,
+       prep.payload ? JSON.stringify(prep.payload) : null, normalizePublishedAt(published_at), req.user.id]
+    );
+    const alert = rows[0];
+    // Diffusion email : uniquement le temps réel (contenu complet). Récap/bulletin = consultables sur le site, sans email.
+    let sent = 0;
+    if (kind === 'realtime') sent = await broadcastToSubscribers(`⚡ Alerte — ${alert.title}`.slice(0, 120), alertEmailHtml(alert));
+    logActivity(req, 'alert.create', alert.title);
+    res.status(201).json({ ...alert, sent });
+  } catch (err) {
+    console.error('Alert create error:', err);
+    res.status(500).json({ error: 'Erreur serveur.' });
+  }
+});
+
+// PATCH /api/alerts/:id — modifier (correction, sans re-diffuser) (admin DJD)
+app.patch('/api/alerts/:id', requireAuth, requireAdmin, async (req, res) => {
+  const { source, url, context, published_at } = req.body;
+  try {
+    const existing = await db.query('SELECT kind FROM alerts WHERE id = $1', [req.params.id]);
+    if (!existing.rows.length) return res.status(404).json({ error: 'Alerte introuvable.' });
+    const kind = existing.rows[0].kind;
+    const prep = prepareAlert(kind, req.body);
+    if (prep.error) return res.status(400).json({ error: prep.error });
+    const { rows } = await db.query(
+      `UPDATE alerts SET title=$1, source=$2, url=$3, context=$4, payload=$5, published_at=COALESCE($6, published_at)
+       WHERE id=$7 RETURNING id, kind, title, source, url, context, payload, published_at, created_at`,
+      [prep.title, source?.trim() || null, url?.trim() || null, context?.trim() || null,
+       prep.payload ? JSON.stringify(prep.payload) : null, normalizePublishedAt(published_at), req.params.id]
+    );
+    logActivity(req, 'alert.update', rows[0].title);
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Alert update error:', err);
+    res.status(500).json({ error: 'Erreur serveur.' });
+  }
+});
+
+// DELETE /api/alerts/:id — supprimer (admin DJD)
+app.delete('/api/alerts/:id', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await db.query('DELETE FROM alerts WHERE id = $1 RETURNING title', [req.params.id]);
+    if (rows.length) logActivity(req, 'alert.delete', rows[0].title);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Alert delete error:', err);
     res.status(500).json({ error: 'Erreur serveur.' });
   }
 });

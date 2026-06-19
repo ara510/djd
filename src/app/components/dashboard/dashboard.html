@@ -33,6 +33,30 @@
           {{ fr ? 'Ajouter' : 'Add' }}
         </button>
       }
+      @if (isAdmin && view() === 'option' && optionKind() === 'realtime') {
+        <button class="dash__add" type="button" (click)="openNewAlert()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          {{ fr ? 'Nouvelle alerte' : 'New alert' }}
+        </button>
+      }
+      @if (isAdmin && view() === 'option' && optionKind() === 'daily') {
+        <button class="dash__add" type="button" (click)="openNewRecap()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          {{ fr ? 'Nouveau récap' : 'New recap' }}
+        </button>
+      }
+      @if (isAdmin && view() === 'option' && optionKind() === 'weekly') {
+        <button class="dash__add" type="button" (click)="openNewBulletin()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          {{ fr ? 'Nouveau bulletin' : 'New bulletin' }}
+        </button>
+      }
       <button class="dash__close" type="button" (click)="close()" [attr.aria-label]="fr ? 'Fermer' : 'Close'">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -48,15 +72,27 @@
     <aside class="dash__sidebar">
 
       @if (isAdmin) {
+        <p class="dash__sidebar-label">{{ fr ? 'Veille' : 'Watch' }}</p>
+        <button class="dash__filter" [class.dash__filter--active]="view() === 'veille'" (click)="setView('veille')" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg>
+          {{ fr ? 'Veille' : 'Watch' }}
+        </button>
+
+        <p class="dash__sidebar-label">{{ fr ? 'Option' : 'Option' }}</p>
+        <button class="dash__filter" [class.dash__filter--active]="view() === 'option' && optionKind() === 'realtime'" (click)="setOption('realtime')" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          {{ fr ? 'Temps réel' : 'Real-time' }}
+        </button>
+        <button class="dash__filter" [class.dash__filter--active]="view() === 'option' && optionKind() === 'daily'" (click)="setOption('daily')" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="15" x2="16" y2="15"/></svg>
+          {{ fr ? 'Récapitulatif quotidien' : 'Daily recap' }}
+        </button>
+        <button class="dash__filter" [class.dash__filter--active]="view() === 'option' && optionKind() === 'weekly'" (click)="setOption('weekly')" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          {{ fr ? 'Bulletin hebdomadaire' : 'Weekly bulletin' }}
+        </button>
+
         <p class="dash__sidebar-label">{{ fr ? 'Administration' : 'Administration' }}</p>
-        <button class="dash__filter" [class.dash__filter--active]="view() === 'veille' && channel() === 'presse'" (click)="setChannel('presse')" type="button">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8v4h-8z"/></svg>
-          {{ fr ? 'Veille Presse' : 'Press watch' }}
-        </button>
-        <button class="dash__filter" [class.dash__filter--active]="view() === 'veille' && channel() === 'digital'" (click)="setChannel('digital')" type="button">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-          {{ fr ? 'Veille Digital' : 'Digital watch' }}
-        </button>
         <button class="dash__filter" [class.dash__filter--active]="view() === 'feedback'" (click)="setView('feedback')" type="button">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           {{ fr ? 'Retours d\'expérience' : 'Feedback' }}
@@ -84,16 +120,24 @@
         </button>
       }
 
+      @if (!isAdmin) {
+        <p class="dash__sidebar-label">{{ fr ? 'Navigation' : 'Navigation' }}</p>
+        <button class="dash__filter" [class.dash__filter--active]="view() === 'veille'" (click)="goToVeille()" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8v4h-8z"/></svg>
+          {{ fr ? 'Veille' : 'Watch' }}
+        </button>
+        <button class="dash__filter" [class.dash__filter--active]="view() === 'option' && optionKind() === 'daily'" (click)="setOption('daily')" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="15" x2="16" y2="15"/></svg>
+          {{ fr ? 'Récap quotidien' : 'Daily recap' }}
+        </button>
+        <button class="dash__filter" [class.dash__filter--active]="view() === 'option' && optionKind() === 'weekly'" (click)="setOption('weekly')" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          {{ fr ? 'Bulletin hebdo' : 'Weekly bulletin' }}
+        </button>
+      }
+
       @if (view() === 'veille') {
-        @if (hasChannels && !isAdmin) {
-          <button class="dash__filter" [class.dash__filter--active]="channel() === 'presse'" (click)="setChannel('presse')" type="button">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8v4h-8z"/></svg>
-            {{ fr ? 'Veille Presse' : 'Press watch' }}
-          </button>
-          <button class="dash__filter" [class.dash__filter--active]="channel() === 'digital'" (click)="setChannel('digital')" type="button">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-            {{ fr ? 'Veille Digital' : 'Digital watch' }}
-          </button>
+        @if (!isAdmin) {
           <p class="dash__sidebar-label">{{ fr ? 'Filtres' : 'Filters' }}</p>
         }
         <button class="dash__filter" [class.dash__filter--active]="!activeType() && !activeSector() && readingFilter() === 'all'" (click)="selectType(null); selectSector(null); setReadingFilter('all')" type="button">
@@ -130,14 +174,12 @@
           }
         </div>
 
-        @if (!hasChannels) {
-          <p class="dash__sidebar-label">{{ fr ? 'Sources' : 'Sources' }}</p>
-          @for (t of sourceTypes; track t.value) {
-            <button class="dash__filter" [class.dash__filter--active]="activeType() === t.value" (click)="selectType(t.value)" type="button">
-              <span class="dash__dot" [attr.data-type]="t.value"></span>
-              {{ fr ? t.fr : t.en }}
-            </button>
-          }
+        <p class="dash__sidebar-label">{{ fr ? 'Sources' : 'Sources' }}</p>
+        @for (t of sourceTypes; track t.value) {
+          <button class="dash__filter" [class.dash__filter--active]="activeType() === t.value" (click)="selectType(t.value)" type="button">
+            <span class="dash__dot" [attr.data-type]="t.value"></span>
+            {{ fr ? t.fr : t.en }}
+          </button>
         }
 
         <p class="dash__sidebar-label">{{ fr ? 'Secteurs' : 'Sectors' }}</p>
@@ -495,6 +537,156 @@
             <p class="dash__state">{{ fr ? 'Aucun abonné pour le moment.' : 'No subscribers yet.' }}</p>
           }
         }
+      } @else if (view() === 'option') {
+        <!-- ── Vue Option (alertes : temps réel / quotidien / hebdo) ── -->
+        @if (optionKind() === 'realtime') {
+          @if (alerts.loading()) {
+            <p class="dash__state">{{ fr ? 'Chargement…' : 'Loading…' }}</p>
+          } @else {
+            <p class="alert-intro">
+              {{ fr
+                ? 'Envoi immédiat par email dès qu\'un fait marquant émerge dans l\'actualité malgache. Chaque alerte publiée est envoyée à tous les abonnés.'
+                : 'Immediate email as soon as a notable fact emerges in Malagasy news. Each published alert is sent to all subscribers.' }}
+            </p>
+            @if (alerts.items().length === 0) {
+              <div class="dash__empty">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink-muted)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                <p>{{ fr ? 'Aucune alerte. Cliquez sur « Nouvelle alerte » pour en diffuser une.' : 'No alerts yet. Click “New alert” to broadcast one.' }}</p>
+              </div>
+            } @else {
+              <div class="alert-list">
+                @for (a of alerts.items(); track a.id) {
+                  <article class="alert-card">
+                    <div class="alert-card__head">
+                      <span class="alert-card__badge">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        {{ fr ? 'Temps réel' : 'Real-time' }}
+                      </span>
+                      <span class="alert-card__date">{{ a.published_at | date:'dd/MM/yyyy' }}</span>
+                      <span class="alert-card__actions">
+                        <button type="button" (click)="openEditAlert(a)" [attr.aria-label]="fr ? 'Modifier' : 'Edit'">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
+                        <button type="button" (click)="confirmDeleteAlert(a)" [attr.aria-label]="fr ? 'Supprimer' : 'Delete'">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                        </button>
+                      </span>
+                    </div>
+                    <h3 class="alert-card__title">{{ a.title }}</h3>
+                    @if (a.context) { <p class="alert-card__context">{{ a.context }}</p> }
+                    @if (a.source || a.url) {
+                      <p class="alert-card__source">
+                        <span class="alert-card__source-label">Source</span>
+                        @if (a.url) {
+                          <a [href]="a.url" target="_blank" rel="noopener">{{ a.source || (fr ? 'Lien' : 'Link') }}</a>
+                        } @else {
+                          {{ a.source }}
+                        }
+                      </p>
+                    }
+                  </article>
+                }
+              </div>
+            }
+          }
+        } @else if (optionKind() === 'daily') {
+          @if (alerts.loading()) {
+            <p class="dash__state">{{ fr ? 'Chargement…' : 'Loading…' }}</p>
+          } @else {
+            @if (isAdmin) {
+              <p class="alert-intro">
+                {{ fr
+                  ? 'Récapitulatif des faits du jour, sans analyse — juste les faits et leurs sources, lisible en 5 minutes. Visible par tous les abonnés (cliquez pour l\'aperçu complet).'
+                  : 'End-of-day recap of the day\'s facts — no analysis, just facts and sources. Visible to all subscribers (click for the full view).' }}
+              </p>
+            }
+            @if (alerts.items().length === 0) {
+              <div class="dash__empty">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink-muted)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="15" x2="16" y2="15"/></svg>
+                <p>{{ isAdmin
+                    ? (fr ? 'Aucun récapitulatif. Cliquez sur « Nouveau récap » pour en publier un.' : 'No recap yet. Click “New recap” to publish one.')
+                    : (fr ? 'Aucun récapitulatif pour le moment.' : 'No recap yet.') }}</p>
+              </div>
+            } @else {
+              <div class="recap-cards">
+                @for (r of alerts.items(); track r.id) {
+                  <article class="recap-card" (click)="openAlertDetail(r)">
+                    <div class="recap-card__top">
+                      <span class="recap-card__kicker">{{ fr ? 'Récapitulatif quotidien' : 'Daily recap' }}</span>
+                      @if (isAdmin) {
+                        <span class="recap-card__actions">
+                          <button type="button" (click)="$event.stopPropagation(); openEditRecap(r)" [attr.aria-label]="fr ? 'Modifier' : 'Edit'">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                          </button>
+                          <button type="button" (click)="$event.stopPropagation(); confirmDeleteAlert(r)" [attr.aria-label]="fr ? 'Supprimer' : 'Delete'">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                          </button>
+                        </span>
+                      }
+                    </div>
+                    <h3 class="recap-card__title">{{ r.published_at | date:'dd/MM/yyyy' }}</h3>
+                    <p class="recap-card__meta">
+                      {{ recapFactCount(r) }} {{ fr ? (recapFactCount(r) > 1 ? 'faits relevés' : 'fait relevé') : (recapFactCount(r) > 1 ? 'facts logged' : 'fact logged') }}
+                      <span class="recap-card__sep">·</span>
+                      {{ (r.payload?.rubriques || []).length }} {{ fr ? 'rubrique(s)' : 'section(s)' }}
+                    </p>
+                    <span class="recap-card__more">{{ fr ? 'Lire le récapitulatif' : 'Read recap' }} →</span>
+                  </article>
+                }
+              </div>
+            }
+          }
+        } @else {
+          @if (alerts.loading()) {
+            <p class="dash__state">{{ fr ? 'Chargement…' : 'Loading…' }}</p>
+          } @else {
+            @if (isAdmin) {
+              <p class="alert-intro">
+                {{ fr
+                  ? 'Bulletin de synthèse de la semaine (2 à 4 pages, lisible en 10 minutes). Visible par tous les abonnés (cliquez pour l\'aperçu complet).'
+                  : 'Weekly synthesis bulletin (2–4 pages, ~10 min read). Visible to all subscribers (click for the full view).' }}
+              </p>
+            }
+            @if (alerts.items().length === 0) {
+              <div class="dash__empty">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink-muted)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                <p>{{ isAdmin
+                    ? (fr ? 'Aucun bulletin. Cliquez sur « Nouveau bulletin » pour le composer.' : 'No bulletin yet. Click “New bulletin” to compose one.')
+                    : (fr ? 'Aucun bulletin disponible pour le moment.' : 'No bulletin available yet.') }}</p>
+              </div>
+            } @else {
+              <div class="recap-cards">
+                @for (b of alerts.items(); track b.id) {
+                  <article class="recap-card recap-card--bulletin" (click)="openAlertDetail(b)">
+                    <div class="recap-card__top">
+                      <span class="recap-card__kicker">{{ fr ? 'Bulletin de veille médiatique' : 'Media watch bulletin' }}</span>
+                      @if (isAdmin) {
+                        <span class="recap-card__actions">
+                          <button type="button" (click)="$event.stopPropagation(); openEditRecap(b)" [attr.aria-label]="fr ? 'Modifier' : 'Edit'">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                          </button>
+                          <button type="button" (click)="$event.stopPropagation(); confirmDeleteAlert(b)" [attr.aria-label]="fr ? 'Supprimer' : 'Delete'">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                          </button>
+                        </span>
+                      }
+                    </div>
+                    <h3 class="recap-card__title">
+                      @if (b.payload?.period_from || b.payload?.period_to) {
+                        {{ fr ? 'Semaine du' : 'Week of' }} {{ b.payload?.period_from | date:'dd/MM/yyyy' }}@if (b.payload?.period_to) { {{ fr ? ' au' : ' to' }} {{ b.payload?.period_to | date:'dd/MM/yyyy' }} }
+                      } @else {
+                        {{ b.published_at | date:'dd/MM/yyyy' }}
+                      }
+                    </h3>
+                    @if (b.payload?.summary) { <p class="recap-card__excerpt">{{ b.payload?.summary }}</p> }
+                    <p class="recap-card__meta">{{ recapFactCount(b) }} {{ fr ? (recapFactCount(b) > 1 ? 'faits' : 'fait') : (recapFactCount(b) > 1 ? 'facts' : 'fact') }} · {{ (b.payload?.rubriques || []).length }} {{ fr ? 'rubrique(s)' : 'section(s)' }}</p>
+                    <span class="recap-card__more">{{ fr ? 'Lire le bulletin' : 'Read bulletin' }} →</span>
+                  </article>
+                }
+              </div>
+            }
+          }
+        }
       } @else if (veille.loading()) {
         <p class="dash__state">{{ fr ? 'Chargement…' : 'Loading…' }}</p>
       } @else if (displayedVeille.length === 0) {
@@ -543,7 +735,7 @@
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M16 3l5 5-4 1-3 3-1 5-2-2-4 4-1-1 4-4-2-2 5-1 3-3z"/></svg>
                     </span>
                   }
-                  @for (t of displayTypes(item); track t) {
+                  @for (t of typesOf(item); track t) {
                     <span class="dash-card__type"
                           [attr.data-type]="t"
                           [attr.data-net]="t === 'social' ? item.social_network : null">
@@ -630,7 +822,7 @@
                 @for (item of g.items; track item.id) {
                 <article class="feed-card" [class.feed-card--unread]="!item.read" (appSeen)="markRead(item)">
                   <div class="feed-card__head">
-                    @for (t of displayTypes(item); track t) {
+                    @for (t of typesOf(item); track t) {
                       <span class="dash-card__type" [attr.data-type]="t" [attr.data-net]="t === 'social' ? item.social_network : null">
                         <span class="dash-card__type-icon">
                           <app-veille-icon [type]="t" [network]="t === 'social' ? item.social_network : null"></app-veille-icon>
@@ -755,15 +947,26 @@
 
         <div class="dash-field__row">
           <div class="dash-field">
-            <label class="dash-field__label">{{ fr ? 'Canal' : 'Channel' }}</label>
-            <div class="dash-channel-tag" [attr.data-channel]="formChannel()">
-              <span class="dash-channel-tag__icon">
-                <app-veille-icon [type]="formChannel() === 'digital' ? 'social' : 'presse'"></app-veille-icon>
-              </span>
-              {{ formChannel() === 'digital'
-                  ? (fr ? 'Veille Digital — réseaux sociaux' : 'Digital — social media')
-                  : (fr ? 'Veille Presse — presse écrite' : 'Press — written press') }}
-            </div>
+            <label class="dash-field__label">{{ fr ? 'Types de source' : 'Source types' }} *</label>
+            <select class="dash-field__input" [ngModel]="''" (ngModelChange)="addSourceType($event)">
+              <option value="">— {{ fr ? 'Ajouter un type…' : 'Add a type…' }} —</option>
+              @for (t of sourceTypes; track t.value) {
+                @if (!hasSourceType(t.value)) { <option [value]="t.value">{{ fr ? t.fr : t.en }}</option> }
+              }
+            </select>
+            @if (form.source_types.length) {
+              <div class="dash-types">
+                @for (t of form.source_types; track t) {
+                  <span class="dash-type-chip">
+                    <span class="dash-type-chip__icon"><app-veille-icon [type]="t"></app-veille-icon></span>
+                    {{ typeLabel(t) }}
+                    <button type="button" class="dash-type-chip__x" (click)="removeSourceType(t)" [attr.aria-label]="fr ? 'Retirer' : 'Remove'">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                  </span>
+                }
+              </div>
+            }
           </div>
           <div class="dash-field">
             <label class="dash-field__label">{{ fr ? 'Secteurs' : 'Sectors' }} *</label>
@@ -792,23 +995,7 @@
           </div>
         </div>
 
-        @if (formChannel() === 'presse') {
-          <div class="dash-field">
-            <label class="dash-field__label">{{ fr ? 'Inclure aussi' : 'Also include' }} <span class="dash-field__hint">{{ fr ? '(en plus de la presse écrite, facultatif)' : '(in addition to written press, optional)' }}</span></label>
-            <div class="dash-media-btns">
-              <button type="button" class="dash-media-btn" [class.dash-media-btn--active]="hasSourceType('tv')" (click)="toggleSourceType('tv')">
-                <app-veille-icon [type]="'tv'"></app-veille-icon>
-                {{ fr ? 'Télévision' : 'TV' }}
-              </button>
-              <button type="button" class="dash-media-btn" [class.dash-media-btn--active]="hasSourceType('radio')" (click)="toggleSourceType('radio')">
-                <app-veille-icon [type]="'radio'"></app-veille-icon>
-                {{ fr ? 'Radio' : 'Radio' }}
-              </button>
-            </div>
-          </div>
-        }
-
-        @if (formChannel() === 'digital') {
+        @if (hasSourceType('social')) {
           <div class="dash-field">
             <label class="dash-field__label">{{ fr ? 'Réseau social' : 'Social network' }}</label>
             <div class="dash-net-picker">
@@ -822,20 +1009,18 @@
           </div>
         }
 
-        @if (formChannel() === 'digital') {
-          <div class="dash-field">
-            <label class="dash-field__label">{{ fr ? 'Ton' : 'Tone' }} <span class="dash-field__hint">{{ fr ? '(facultatif)' : '(optional)' }}</span></label>
-            <div class="dash-tone-picker">
-              @for (t of tones; track t.value) {
-                <button type="button" class="dash-tone" [class.dash-tone--active]="form.tone === t.value"
-                        [attr.data-tone]="t.value" (click)="form.tone = form.tone === t.value ? '' : t.value">
-                  <span class="dash-tone__dot"></span>
-                  {{ fr ? t.fr : t.en }}
-                </button>
-              }
-            </div>
+        <div class="dash-field">
+          <label class="dash-field__label">{{ fr ? 'Ton' : 'Tone' }} <span class="dash-field__hint">{{ fr ? '(facultatif)' : '(optional)' }}</span></label>
+          <div class="dash-tone-picker">
+            @for (t of tones; track t.value) {
+              <button type="button" class="dash-tone" [class.dash-tone--active]="form.tone === t.value"
+                      [attr.data-tone]="t.value" (click)="form.tone = form.tone === t.value ? '' : t.value">
+                <span class="dash-tone__dot"></span>
+                {{ fr ? t.fr : t.en }}
+              </button>
+            }
           </div>
-        }
+        </div>
 
         <div class="dash-field__row">
           <div class="dash-field">
@@ -886,13 +1071,11 @@
               {{ fr ? 'Images' : 'Images' }}
               @if (form.images.length) { <span class="dash-media-btn__count">{{ form.images.length }}</span> }
             </button>
-            @if (formChannel() === 'digital') {
-              <button type="button" class="dash-media-btn" [class.dash-media-btn--active]="showVideo()" (click)="showVideo.set(!showVideo())" [attr.title]="fr ? 'Vidéo' : 'Video'">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-                {{ fr ? 'Vidéo' : 'Video' }}
-                @if (form.video) { <span class="dash-media-btn__dot"></span> }
-              </button>
-            }
+            <button type="button" class="dash-media-btn" [class.dash-media-btn--active]="showVideo()" (click)="showVideo.set(!showVideo())" [attr.title]="fr ? 'Vidéo' : 'Video'">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+              {{ fr ? 'Vidéo' : 'Video' }}
+              @if (form.video) { <span class="dash-media-btn__dot"></span> }
+            </button>
           </div>
         </div>
 
@@ -991,6 +1174,331 @@
     </div>
   }
 
+  <!-- ── Éditeur d'alerte (Option temps réel, admin) ── -->
+  @if (showAlertEditor()) {
+    <div class="dash-editor-overlay" (click)="closeAlertEditor()"></div>
+    <div class="dash-editor dash-editor--alert">
+      <div class="dash-editor__header">
+        <span class="dash-editor__title">{{ editingAlertId() ? (fr ? 'Modifier l\'alerte' : 'Edit alert') : (fr ? 'Nouvelle alerte — temps réel' : 'New alert — real-time') }}</span>
+        <button class="dash-editor__close" type="button" (click)="closeAlertEditor()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="dash-editor__body">
+        @if (!editingAlertId()) {
+          <p class="alert-editor__note">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            {{ fr
+              ? 'À la publication, cette alerte est envoyée immédiatement par email à tous les abonnés (les comptes DJD ne la reçoivent pas).'
+              : 'On publish, this alert is emailed immediately to all subscribers (DJD accounts are excluded).' }}
+          </p>
+        }
+
+        <div class="dash-field">
+          <label class="dash-field__label">{{ fr ? 'Titre' : 'Title' }} * <span class="dash-field__hint">{{ fr ? '(l\'essentiel du fait en une ligne)' : '(the key fact in one line)' }}</span></label>
+          <input class="dash-field__input" type="text" [(ngModel)]="alertForm.title"
+                 [placeholder]="fr ? 'Ex. Arrestation du député Naivo Raholdina (Tana V)' : 'E.g. MP arrested in Antananarivo'" />
+        </div>
+
+        <div class="dash-field__row">
+          <div class="dash-field">
+            <label class="dash-field__label">{{ fr ? 'Source' : 'Source' }} <span class="dash-field__hint">{{ fr ? '(nom du média)' : '(media name)' }}</span></label>
+            <input class="dash-field__input" type="text" [(ngModel)]="alertForm.source"
+                   [placeholder]="fr ? 'Ex. Midi Madagasikara' : 'E.g. Midi Madagasikara'" />
+          </div>
+          <div class="dash-field">
+            <label class="dash-field__label">{{ fr ? 'Date' : 'Date' }}</label>
+            <div class="dash-date">
+              <input class="dash-field__input" type="text" inputmode="numeric" maxlength="10"
+                     [(ngModel)]="alertDateDisplay" (blur)="parseAlertDate()" (keydown.enter)="parseAlertDate(); $event.preventDefault()"
+                     placeholder="jj/mm/aaaa" />
+              <button type="button" class="dash-date__cal" (click)="alertDateInput.showPicker()" [attr.aria-label]="fr ? 'Ouvrir le calendrier' : 'Open calendar'">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </button>
+              <input #alertDateInput class="dash-date__native" type="date" tabindex="-1"
+                     [ngModel]="alertForm.published_at" (ngModelChange)="setAlertDateFromPicker($event)" />
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-field">
+          <label class="dash-field__label">{{ fr ? 'Lien' : 'Link' }} <span class="dash-field__hint">{{ fr ? '(facultatif)' : '(optional)' }}</span></label>
+          <input class="dash-field__input" type="url" [(ngModel)]="alertForm.url" placeholder="https://…" />
+        </div>
+
+        <div class="dash-field">
+          <label class="dash-field__label">{{ fr ? 'Contexte' : 'Context' }} <span class="dash-field__hint">{{ fr ? '(2 à 3 lignes maximum)' : '(2–3 lines max)' }}</span></label>
+          <textarea class="dash-field__input dash-field__textarea" rows="4" [(ngModel)]="alertForm.context"
+                    [placeholder]="fr ? 'Précisez les faits, le contexte et les enjeux en quelques lignes…' : 'Summarize the facts and context in a few lines…'"></textarea>
+        </div>
+      </div>
+
+      <div class="dash-editor__foot">
+        <button class="dash-editor__cancel" type="button" (click)="closeAlertEditor()">{{ fr ? 'Annuler' : 'Cancel' }}</button>
+        <button class="dash-editor__save" type="button" (click)="saveAlert()" [disabled]="savingAlert() || !alertForm.title.trim()">
+          {{ savingAlert()
+            ? (fr ? 'Envoi…' : 'Sending…')
+            : (editingAlertId() ? (fr ? 'Enregistrer' : 'Save') : (fr ? 'Publier et envoyer' : 'Publish & send')) }}
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ── Éditeur de récapitulatif quotidien (Option, admin) ── -->
+  @if (showRecapEditor()) {
+    <div class="dash-editor-overlay" (click)="closeRecapEditor()"></div>
+    <div class="dash-editor dash-editor--recap">
+      <div class="dash-editor__header">
+        <span class="dash-editor__title">
+          @if (recapEditKind() === 'weekly') {
+            {{ editingRecapId() ? (fr ? 'Modifier le bulletin' : 'Edit bulletin') : (fr ? 'Nouveau bulletin hebdomadaire' : 'New weekly bulletin') }}
+          } @else {
+            {{ editingRecapId() ? (fr ? 'Modifier le récapitulatif' : 'Edit recap') : (fr ? 'Nouveau récapitulatif quotidien' : 'New daily recap') }}
+          }
+        </span>
+        <button class="dash-editor__close" type="button" (click)="closeRecapEditor()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="dash-editor__body">
+        @if (!editingRecapId()) {
+          <p class="alert-editor__note">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            {{ fr
+              ? 'Visible par tous les abonnés sur le site dès la publication (consultable en cliquant dessus). Aucun email n\'est envoyé.'
+              : 'Visible to all subscribers on the site once published (opened by clicking). No email is sent.' }}
+          </p>
+        }
+
+        @if (recapEditKind() === 'weekly') {
+          <!-- Bulletin : période couverte (du / au) -->
+          <div class="dash-field__row">
+            <div class="dash-field">
+              <label class="dash-field__label">{{ fr ? 'Période — du' : 'Period — from' }}</label>
+              <div class="dash-date">
+                <input class="dash-field__input" type="text" inputmode="numeric" maxlength="10"
+                       [(ngModel)]="periodFromDisplay" (blur)="parsePeriodFrom()" (keydown.enter)="parsePeriodFrom(); $event.preventDefault()"
+                       placeholder="jj/mm/aaaa" />
+                <button type="button" class="dash-date__cal" (click)="periodFromInput.showPicker()" [attr.aria-label]="fr ? 'Ouvrir le calendrier' : 'Open calendar'">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </button>
+                <input #periodFromInput class="dash-date__native" type="date" tabindex="-1"
+                       [ngModel]="recapForm.period_from" (ngModelChange)="setPeriodFromPicker($event)" />
+              </div>
+            </div>
+            <div class="dash-field">
+              <label class="dash-field__label">{{ fr ? 'Période — au' : 'Period — to' }}</label>
+              <div class="dash-date">
+                <input class="dash-field__input" type="text" inputmode="numeric" maxlength="10"
+                       [(ngModel)]="periodToDisplay" (blur)="parsePeriodTo()" (keydown.enter)="parsePeriodTo(); $event.preventDefault()"
+                       placeholder="jj/mm/aaaa" />
+                <button type="button" class="dash-date__cal" (click)="periodToInput.showPicker()" [attr.aria-label]="fr ? 'Ouvrir le calendrier' : 'Open calendar'">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </button>
+                <input #periodToInput class="dash-date__native" type="date" tabindex="-1"
+                       [ngModel]="recapForm.period_to" (ngModelChange)="setPeriodToPicker($event)" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Bulletin : résumé exécutif -->
+          <div class="dash-field">
+            <label class="dash-field__label">{{ fr ? 'Résumé exécutif' : 'Executive summary' }} <span class="dash-field__hint">{{ fr ? '(5 à 8 lignes — les faits marquants de la semaine)' : '(5–8 lines — the week\'s key facts)' }}</span></label>
+            <textarea class="dash-field__input dash-field__textarea" rows="5" [(ngModel)]="recapForm.summary"
+                      [placeholder]="fr ? 'Synthèse des faits marquants de la semaine…' : 'Summary of the week\'s key facts…'"></textarea>
+          </div>
+        } @else {
+          <!-- Récap : date + compteur de faits -->
+          <div class="dash-field__row">
+            <div class="dash-field">
+              <label class="dash-field__label">{{ fr ? 'Date du récapitulatif' : 'Recap date' }}</label>
+              <div class="dash-date">
+                <input class="dash-field__input" type="text" inputmode="numeric" maxlength="10"
+                       [(ngModel)]="recapDateDisplay" (blur)="parseRecapDate()" (keydown.enter)="parseRecapDate(); $event.preventDefault()"
+                       placeholder="jj/mm/aaaa" />
+                <button type="button" class="dash-date__cal" (click)="recapDateInput.showPicker()" [attr.aria-label]="fr ? 'Ouvrir le calendrier' : 'Open calendar'">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </button>
+                <input #recapDateInput class="dash-date__native" type="date" tabindex="-1"
+                       [ngModel]="recapForm.published_at" (ngModelChange)="setRecapDateFromPicker($event)" />
+              </div>
+            </div>
+            <div class="dash-field">
+              <label class="dash-field__label">{{ fr ? 'Faits relevés' : 'Facts logged' }}</label>
+              <div class="recap-count">{{ recapFormFactCount }} {{ fr ? (recapFormFactCount > 1 ? 'faits' : 'fait') : (recapFormFactCount > 1 ? 'facts' : 'fact') }}</div>
+            </div>
+          </div>
+        }
+
+        <!-- Rubriques -->
+        @for (rub of recapForm.rubriques; track $index; let ri = $index) {
+          <div class="recap-edit-rubrique">
+            <div class="recap-edit-rubrique__head">
+              <input class="dash-field__input recap-edit-rubrique__name" type="text" [(ngModel)]="rub.name" list="recapRubriques"
+                     [placeholder]="fr ? 'Rubrique (ex. Politique, Économie / Mines…)' : 'Section (e.g. Politics…)'" />
+              <button type="button" class="recap-edit__del" (click)="removeRubrique(ri)" [attr.aria-label]="fr ? 'Retirer la rubrique' : 'Remove section'">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+              </button>
+            </div>
+
+            @for (f of rub.facts; track $index; let fi = $index) {
+              <div class="recap-edit-fact">
+                <div class="recap-edit-fact__bullet">•</div>
+                <div class="recap-edit-fact__fields">
+                  <div class="recap-fmt">
+                    <button type="button" class="recap-fmt__btn" (click)="wrapText(factText, f, 'bold')" [title]="fr ? 'Gras' : 'Bold'"><b>B</b></button>
+                    <button type="button" class="recap-fmt__btn" (click)="wrapText(factText, f, 'italic')" [title]="fr ? 'Italique' : 'Italic'"><i>I</i></button>
+                    <button type="button" class="recap-fmt__btn recap-fmt__btn--mark" (click)="wrapText(factText, f, 'mark')" [title]="fr ? 'Surligner' : 'Highlight'"><span>H</span></button>
+                  </div>
+                  <textarea #factText class="dash-field__input recap-edit-fact__text" rows="2" [(ngModel)]="f.text"
+                            [placeholder]="fr ? 'Fait clé : titre puis détail en 1–2 lignes…' : 'Key fact: title then 1–2 line detail…'"></textarea>
+                  <div class="recap-edit-fact__row" [class.recap-edit-fact__row--dated]="recapEditKind() === 'weekly'">
+                    @if (recapEditKind() === 'weekly') {
+                      <input class="dash-field__input recap-edit-fact__date" type="text" maxlength="5" [(ngModel)]="f.date"
+                             [placeholder]="fr ? 'jj/mm' : 'dd/mm'" [attr.title]="fr ? 'Date du fait' : 'Fact date'" />
+                    }
+                    <input class="dash-field__input" type="text" [(ngModel)]="f.sources"
+                           [placeholder]="fr ? 'Sources (ex. Midi, L\'Express)' : 'Sources (e.g. Midi, L\'Express)'" />
+                    <input class="dash-field__input" type="url" [(ngModel)]="f.url" placeholder="https://… (facultatif)" />
+                  </div>
+                </div>
+                <button type="button" class="recap-edit__del recap-edit-fact__del" (click)="removeFact(ri, fi)" [attr.aria-label]="fr ? 'Retirer le fait' : 'Remove fact'">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            }
+            <button type="button" class="recap-edit__add-fact" (click)="addFact(ri)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              {{ fr ? 'Ajouter un fait' : 'Add a fact' }}
+            </button>
+          </div>
+        }
+        <datalist id="recapRubriques">
+          @for (s of recapRubriqueSuggestions; track s) { <option [value]="s"></option> }
+        </datalist>
+
+        <button type="button" class="recap-edit__add-rubrique" (click)="addRubrique()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          {{ fr ? 'Ajouter une rubrique' : 'Add a section' }}
+        </button>
+
+        @if (recapEditKind() === 'weekly') {
+          <!-- Bulletin : tendances + signaux d'alerte -->
+          <div class="dash-field">
+            <label class="dash-field__label">{{ fr ? 'Tendances de la semaine' : 'Trends of the week' }} <span class="dash-field__hint">{{ fr ? '(sujet montant / sujet qui retombe)' : '(rising / fading topic)' }}</span></label>
+            <textarea class="dash-field__input dash-field__textarea" rows="3" [(ngModel)]="recapForm.trends"
+                      [placeholder]="fr ? 'Ex. Sujet montant : la question de l\'AGOA…' : 'E.g. Rising topic: the AGOA question…'"></textarea>
+          </div>
+          <div class="dash-field">
+            <label class="dash-field__label">{{ fr ? 'Signaux d\'alerte' : 'Alert signals' }} <span class="dash-field__hint">{{ fr ? '(sujets sensibles à surveiller la semaine suivante)' : '(sensitive topics to watch next week)' }}</span></label>
+            <textarea class="dash-field__input dash-field__textarea" rows="3" [(ngModel)]="recapForm.signals"
+                      [placeholder]="fr ? 'Ex. suites judiciaires, sommet FFKM du 18-21 mai…' : 'E.g. legal follow-ups, the FFKM summit…'"></textarea>
+          </div>
+        } @else {
+          <!-- Récap : signal de fin -->
+          <div class="dash-field">
+            <label class="dash-field__label">{{ fr ? 'À suivre demain' : 'To watch tomorrow' }} <span class="dash-field__hint">{{ fr ? '(1 à 2 faits à surveiller, facultatif)' : '(1–2 facts to watch, optional)' }}</span></label>
+            <textarea class="dash-field__input dash-field__textarea" rows="2" [(ngModel)]="recapForm.follow_up"
+                      [placeholder]="fr ? 'Ex. réactions à la cession Ambatovy, suite de la session parlementaire…' : 'E.g. reactions to the Ambatovy sale…'"></textarea>
+          </div>
+        }
+      </div>
+
+      <div class="dash-editor__foot">
+        <button class="dash-editor__cancel" type="button" (click)="closeRecapEditor()">{{ fr ? 'Annuler' : 'Cancel' }}</button>
+        <button class="dash-editor__save" type="button" (click)="saveRecap()" [disabled]="savingRecap()">
+          {{ savingRecap()
+            ? (fr ? 'Publication…' : 'Publishing…')
+            : (editingRecapId() ? (fr ? 'Enregistrer' : 'Save') : (fr ? 'Publier' : 'Publish')) }}
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ── Aperçu complet d'un récapitulatif / bulletin ── -->
+  @if (selectedAlert(); as a) {
+    <div class="dash-detail-overlay" (click)="closeAlertDetail()"></div>
+    <div class="dash-detail">
+      <button class="dash-detail__close" type="button" (click)="closeAlertDetail()" [attr.aria-label]="fr ? 'Fermer' : 'Close'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+
+      <article class="recap recap--detail" [class.recap--bulletin]="a.kind === 'weekly'">
+        <header class="recap__header">
+          <div class="recap__heading">
+            @if (a.kind === 'weekly') {
+              <span class="recap__kicker">{{ fr ? 'Bulletin de veille médiatique' : 'Media watch bulletin' }}</span>
+              @if (a.payload?.period_from || a.payload?.period_to) {
+                <span class="recap__meta">
+                  {{ fr ? 'Semaine du' : 'Week of' }} {{ a.payload?.period_from | date:'dd/MM/yyyy' }}@if (a.payload?.period_to) { {{ fr ? ' au' : ' to' }} {{ a.payload?.period_to | date:'dd/MM/yyyy' }} }
+                </span>
+              }
+            } @else {
+              <span class="recap__kicker">{{ fr ? 'Récapitulatif quotidien' : 'Daily recap' }}</span>
+              <span class="recap__meta">
+                {{ a.published_at | date:'dd/MM/yyyy' }}
+                <span class="recap__sep">|</span>
+                {{ recapFactCount(a) }} {{ fr ? (recapFactCount(a) > 1 ? 'faits relevés' : 'fait relevé') : (recapFactCount(a) > 1 ? 'facts logged' : 'fact logged') }}
+              </span>
+            }
+          </div>
+        </header>
+
+        @if (a.kind === 'weekly' && a.payload?.summary) {
+          <section class="recap__exec">
+            <h4 class="recap__section-label">{{ fr ? 'Résumé exécutif' : 'Executive summary' }}</h4>
+            <p class="recap__exec-text">{{ a.payload?.summary }}</p>
+          </section>
+        }
+
+        @for (rub of a.payload?.rubriques || []; track $index) {
+          <section class="recap__rubrique">
+            <h4 class="recap__rubrique-name">{{ rub.name }}</h4>
+            <ul class="recap__facts">
+              @for (f of rub.facts; track $index) {
+                <li class="recap__fact">
+                  @if (f.date) { <span class="recap__fact-date">{{ f.date }} —</span> }
+                  <span class="recap__fact-text" [innerHTML]="formatRecapText(f.text)"></span>
+                  @if (f.sources || f.url) {
+                    <span class="recap__fact-source">
+                      @if (f.url) {
+                        <a [href]="f.url" target="_blank" rel="noopener">{{ f.sources || (fr ? 'Source' : 'Source') }}</a>
+                      } @else {
+                        {{ fr ? 'Sources' : 'Sources' }} : {{ f.sources }}
+                      }
+                    </span>
+                  }
+                </li>
+              }
+            </ul>
+          </section>
+        }
+
+        @if (a.kind === 'weekly') {
+          @if (a.payload?.trends) {
+            <section class="recap__block recap__block--trends">
+              <h4 class="recap__section-label">{{ fr ? 'Tendances de la semaine' : 'Trends of the week' }}</h4>
+              <p class="recap__block-text">{{ a.payload?.trends }}</p>
+            </section>
+          }
+          @if (a.payload?.signals) {
+            <section class="recap__block recap__block--signals">
+              <h4 class="recap__section-label">{{ fr ? 'Signaux d\'alerte — à suivre' : 'Alert signals — to watch' }}</h4>
+              <p class="recap__block-text">{{ a.payload?.signals }}</p>
+            </section>
+          }
+        } @else if (a.payload?.follow_up) {
+          <p class="recap__followup">
+            <span class="recap__followup-arrow">→</span>
+            <span><strong>{{ fr ? 'À suivre demain' : 'To watch tomorrow' }} :</strong> {{ a.payload?.follow_up }}</span>
+          </p>
+        }
+      </article>
+    </div>
+  }
+
   <!-- ── Vue détail (aperçu complet) ── -->
   @if (selectedItem(); as item) {
     <div class="dash-detail-overlay" (click)="closeDetail()"></div>
@@ -1044,7 +1552,7 @@
 
       <div class="dash-detail__body">
         <div class="dash-detail__meta">
-          @for (t of displayTypes(item); track t) {
+          @for (t of typesOf(item); track t) {
             <span class="dash-card__type"
                   [attr.data-type]="t"
                   [attr.data-net]="t === 'social' ? item.social_network : null">

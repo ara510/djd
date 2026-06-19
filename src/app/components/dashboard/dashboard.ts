@@ -6,6 +6,7 @@ import { TranslationService } from '../../services/translation.service';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
 import { VeilleService, VeilleItem } from '../../services/veille.service';
+import { AlertService, AlertItem, AlertKind, RecapPayload } from '../../services/alert.service';
 import { AdminService, FeedbackItem, AdminUser } from '../../services/admin.service';
 import { ChatService, ChatConversation, ChatMessage } from '../../services/chat.service';
 import { VeilleIconComponent } from '../veille-icon/veille-icon';
@@ -25,14 +26,15 @@ export class DashboardComponent implements OnDestroy {
   auth   = inject(AuthService);
   toast  = inject(ToastService);
   veille = inject(VeilleService);
+  alerts = inject(AlertService);
   admin  = inject(AdminService);
   chat   = inject(ChatService);
   private sanitizer = inject(DomSanitizer);
 
   closing = signal(false);
 
-  // Vue active (admin) : feed, retours, messagerie, utilisateurs, statistiques, journal, corbeille
-  view = signal<'veille' | 'feedback' | 'messages' | 'users' | 'stats' | 'activity' | 'trash'>('veille');
+  // Vue active (admin) : feed, option (alertes), retours, messagerie, utilisateurs, statistiques, journal, corbeille
+  view = signal<'veille' | 'option' | 'feedback' | 'messages' | 'users' | 'stats' | 'activity' | 'trash'>('veille');
 
   // ── Messagerie (chat support) ──────────────────────────────────────────────
   conversations = signal<ChatConversation[]>([]);
@@ -52,7 +54,6 @@ export class DashboardComponent implements OnDestroy {
     // Rafraîchit la liste des conversations (badge + vue) tant que le dashboard est ouvert.
     this.convPoll = setInterval(() => { if (this.isAdmin) this.loadConversations(true); }, 10_000);
     if (this.isAdmin) this.loadConversations(true);
-    if (this.hasChannels) this.veille.load(this.currentFilters());  // feed filtré sur le canal par défaut (Presse)
   }
 
   ngOnDestroy() {
@@ -149,6 +150,9 @@ export class DashboardComponent implements OnDestroy {
     'veille.unpin':  { fr: 'a désépinglé une veille',  en: 'unpinned a watch item',  cat: 'update' },
     'veille.restore':{ fr: 'a restauré une veille',    en: 'restored a watch item',  cat: 'create' },
     'veille.purge':  { fr: 'a supprimé définitivement une veille', en: 'permanently deleted a watch item', cat: 'delete' },
+    'alert.create':  { fr: 'a publié une alerte',      en: 'published an alert',     cat: 'create' },
+    'alert.update':  { fr: 'a modifié une alerte',     en: 'updated an alert',       cat: 'update' },
+    'alert.delete':  { fr: 'a supprimé une alerte',    en: 'deleted an alert',       cat: 'delete' },
     'user.plan':     { fr: 'a changé un abonnement',   en: 'changed a plan',         cat: 'user'   },
     'user.disable':  { fr: 'a désactivé un compte',    en: 'disabled an account',    cat: 'delete' },
     'user.enable':   { fr: 'a réactivé un compte',     en: 're-enabled an account',  cat: 'user'   },
@@ -168,10 +172,8 @@ export class DashboardComponent implements OnDestroy {
     { value: 'suggestion', fr: 'Suggestion',   en: 'Suggestion' },
   ];
 
-  // Canal de veille (admin) : Presse (presse écrite) ou Digital (réseaux sociaux)
-  channel     = signal<'presse' | 'digital'>('presse');
-  formChannel = signal<'presse' | 'digital'>('presse'); // canal du formulaire d'édition en cours
-  channelType(): string { return this.channel() === 'digital' ? 'social' : 'presse'; }
+  // Option « Veille en continu » : temps réel / récapitulatif quotidien / bulletin hebdomadaire
+  optionKind = signal<AlertKind>('realtime');
 
   // Filtres
   activeType   = signal<string | null>(null);
@@ -276,7 +278,6 @@ export class DashboardComponent implements OnDestroy {
     { value: 'btp',           fr: 'BTP',           en: 'Construction' },
     { value: 'mines',         fr: 'Mines',         en: 'Mining'       },
     { value: 'telecoms',      fr: 'Télécoms',      en: 'Telecom'      },
-    { value: 'biodiversite',  fr: 'Biodiversité',  en: 'Biodiversity' },
     { value: 'autre',         fr: 'Autre',         en: 'Other'        },
   ];
 
@@ -291,23 +292,13 @@ export class DashboardComponent implements OnDestroy {
   readonly SECTOR_MIN_LEVEL: Record<string, number> = {
     politique: 0, economie: 0, international: 0, social: 0, autre: 0,
     environnement: 1, agriculture: 1, tourisme: 1, btp: 1,
-    mines: 2, telecoms: 2, biodiversite: 2,
+    mines: 2, telecoms: 2,
   };
 
   get plan(): string { return this.auth.currentUser()?.plan ?? 'generale'; }
   get planLabel(): string { return this.lang.t('sub.' + this.plan + '.short'); }
   get userLevel(): number {
     return this.isAdmin ? 99 : (this.PLAN_LEVEL[this.plan] ?? 0);
-  }
-
-  /** Canaux Presse/Digital : admin + abonnés Sectorielle/Dédiée (pas la Générale). */
-  get hasChannels(): boolean { return this.userLevel >= 1; }
-
-  /** Types affichés sur une carte, filtrés selon le canal courant (Presse cache le social, Digital cache la presse). */
-  displayTypes(item: VeilleItem): string[] {
-    const types = this.typesOf(item);
-    if (!this.hasChannels) return types;
-    return this.channel() === 'digital' ? types.filter(t => t === 'social') : types.filter(t => t !== 'social');
   }
 
   canAccessSector(value: string): boolean {
@@ -389,12 +380,6 @@ export class DashboardComponent implements OnDestroy {
     this.form.source_types = this.form.source_types.filter(t => t !== value);
   }
 
-  /** Bascule un type secondaire (TV / Radio) en Veille Presse. */
-  toggleSourceType(value: string) {
-    if (this.form.source_types.includes(value)) this.removeSourceType(value);
-    else this.addSourceType(value);
-  }
-
   // ── Comptes / Pages / Groupes (saisie multiple, Entrée pour ajouter) ─────
   addSource() {
     const v = this.form.sourceDraft.trim();
@@ -432,20 +417,39 @@ export class DashboardComponent implements OnDestroy {
     }));
   }
 
-  // ── Canal Presse / Digital (admin) ──────────────────────────────────────
-  setChannel(c: 'presse' | 'digital') {
-    this.channel.set(c);
+  // ── Option : temps réel / récapitulatif quotidien / bulletin hebdomadaire ──
+  readonly optionKinds: { value: AlertKind; fr: string; en: string }[] = [
+    { value: 'realtime', fr: 'Temps réel',             en: 'Real-time'     },
+    { value: 'daily',    fr: 'Récapitulatif quotidien', en: 'Daily recap'  },
+    { value: 'weekly',   fr: 'Bulletin hebdomadaire',   en: 'Weekly bulletin' },
+  ];
+
+  setOption(kind: AlertKind) {
+    this.optionKind.set(kind);
+    this.view.set('option');
+    this.alerts.load(kind);
+  }
+
+  /** Retour au fil de veille (utilisé par la navigation des abonnés Générale). */
+  goToVeille() {
     this.view.set('veille');
-    this.activeSector.set(null);   // on repart d'une vue propre en changeant de canal
     this.veille.load(this.currentFilters());
   }
 
+  /** Nombre total de faits relevés dans un récapitulatif. */
+  recapFactCount(item: AlertItem): number {
+    return (item.payload?.rubriques || []).reduce((n, r) => n + (r.facts?.length || 0), 0);
+  }
+
+  // ── Aperçu complet d'un récap / bulletin (overlay, comme le détail veille) ──
+  selectedAlert = signal<AlertItem | null>(null);
+  openAlertDetail(a: AlertItem) { this.selectedAlert.set(a); }
+  closeAlertDetail() { this.selectedAlert.set(null); }
+
   // ── Filtres ──────────────────────────────────────────────────────────────
   private currentFilters() {
-    // Avec canaux (admin + Sectorielle/Dédiée), le type est imposé par le canal.
     return {
-      type: this.hasChannels ? this.channelType() : this.activeType(),
-      sector: this.activeSector(), q: this.search.trim(),
+      type: this.activeType(), sector: this.activeSector(), q: this.search.trim(),
       from: this.dateFrom(), to: this.dateTo(),
     };
   }
@@ -591,7 +595,7 @@ export class DashboardComponent implements OnDestroy {
   setFeedGallery(item: VeilleItem, i: number) { this.feedGallery.update(g => ({ ...g, [item.id]: i })); }
 
   // ── Vue admin (Veille / Retours / Utilisateurs / Stats) ─────────────────
-  setView(v: 'veille' | 'feedback' | 'messages' | 'users' | 'stats' | 'activity' | 'trash') {
+  setView(v: 'veille' | 'option' | 'feedback' | 'messages' | 'users' | 'stats' | 'activity' | 'trash') {
     this.view.set(v);
     if (v !== 'messages') { this.selectedConv.set(null); this.stopThreadPoll(); }
     if (v === 'feedback') this.admin.loadFeedback();
@@ -694,9 +698,6 @@ export class DashboardComponent implements OnDestroy {
   openNew() {
     this.editingId.set(null);
     this.form = this.emptyForm();
-    // Type imposé par le canal : Presse → presse écrite ; Digital → réseau social.
-    this.formChannel.set(this.channel());
-    this.form.source_types = this.channel() === 'digital' ? ['social'] : ['presse'];
     this.dateDisplay = '';
     this.syncMediaToggles();
     this.showEditor.set(true);
@@ -723,16 +724,10 @@ export class DashboardComponent implements OnDestroy {
     };
   }
 
-  /** Canal d'une veille selon son type : réseau social → digital, sinon presse. */
-  channelOf(item: VeilleItem): 'presse' | 'digital' {
-    return this.typesOf(item).includes('social') ? 'digital' : 'presse';
-  }
-
   openEdit(item: VeilleItem) {
     this.selectedItem.set(null);
     this.editingId.set(item.id);
     this.form = this.buildForm(item);
-    this.formChannel.set(this.channelOf(item));
     this.dateDisplay = this.isoToDisplay(this.form.published_at);
     this.syncMediaToggles();
     this.showEditor.set(true);
@@ -754,7 +749,6 @@ export class DashboardComponent implements OnDestroy {
     this.selectedItem.set(null);
     this.editingId.set(null); // mode création → l'enregistrement crée une copie
     this.form = this.buildForm(item);
-    this.formChannel.set(this.channelOf(item));
     this.form.pinned = false; // on n'épingle pas la copie
     this.dateDisplay = this.isoToDisplay(this.form.published_at);
     this.syncMediaToggles();
@@ -954,6 +948,328 @@ export class DashboardComponent implements OnDestroy {
     });
   }
 
+  // ── Éditeur d'alerte (Option temps réel, admin) ─────────────────────────
+  showAlertEditor = signal(false);
+  editingAlertId  = signal<number | null>(null);
+  savingAlert     = signal(false);
+  alertDateDisplay = '';
+  alertForm = this.emptyAlertForm();
+
+  private emptyAlertForm() {
+    return { title: '', source: '', url: '', context: '', published_at: '' };
+  }
+
+  private todayIso(): string {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  /** Parse le champ texte jj/mm/aaaa → met à jour alertForm.published_at (ISO). */
+  parseAlertDate() {
+    const s = this.alertDateDisplay.trim();
+    if (!s) { this.alertForm.published_at = ''; return; }
+    const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    const d = m ? +m[1] : 0, mo = m ? +m[2] : 0, y = m ? +m[3] : 0;
+    if (!m || mo < 1 || mo > 12 || d < 1 || d > 31) {
+      this.toast.show(this.fr ? 'Date invalide — format jj/mm/aaaa.' : 'Invalid date — dd/mm/yyyy.', 'error');
+      this.alertDateDisplay = this.isoToDisplay(this.alertForm.published_at);
+      return;
+    }
+    this.alertForm.published_at = `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    this.alertDateDisplay = this.isoToDisplay(this.alertForm.published_at);
+  }
+
+  setAlertDateFromPicker(iso: string) {
+    this.alertForm.published_at = iso || '';
+    this.alertDateDisplay = this.isoToDisplay(this.alertForm.published_at);
+  }
+
+  openNewAlert() {
+    this.editingAlertId.set(null);
+    this.alertForm = this.emptyAlertForm();
+    this.alertForm.published_at = this.todayIso();
+    this.alertDateDisplay = this.isoToDisplay(this.alertForm.published_at);
+    this.showAlertEditor.set(true);
+  }
+
+  openEditAlert(item: AlertItem) {
+    this.editingAlertId.set(item.id);
+    this.alertForm = {
+      title: item.title ?? '',
+      source: item.source ?? '',
+      url: item.url ?? '',
+      context: item.context ?? '',
+      published_at: item.published_at ? item.published_at.slice(0, 10) : '',
+    };
+    this.alertDateDisplay = this.isoToDisplay(this.alertForm.published_at);
+    this.showAlertEditor.set(true);
+  }
+
+  closeAlertEditor() { this.showAlertEditor.set(false); }
+
+  saveAlert() {
+    if (this.savingAlert() || !this.alertForm.title.trim()) return;
+    this.savingAlert.set(true);
+    const body: Partial<AlertItem> = {
+      kind: this.optionKind(),
+      title: this.alertForm.title.trim(),
+      source: this.alertForm.source.trim() || null,
+      url: this.alertForm.url.trim() || null,
+      context: this.alertForm.context.trim() || null,
+      published_at: this.alertForm.published_at || undefined,
+    };
+    const id = this.editingAlertId();
+    const req = id ? this.alerts.update(id, body) : this.alerts.create(body);
+    req.subscribe({
+      next: (res) => {
+        this.savingAlert.set(false);
+        this.showAlertEditor.set(false);
+        this.alerts.load(this.optionKind());
+        const sent = (res as AlertItem & { sent?: number }).sent;
+        if (!id && typeof sent === 'number') {
+          this.toast.show(
+            this.fr ? `Alerte diffusée à ${sent} abonné(s).` : `Alert sent to ${sent} subscriber(s).`,
+            'success'
+          );
+        } else {
+          this.toast.show(this.fr ? 'Alerte enregistrée.' : 'Alert saved.', 'success');
+        }
+      },
+      error: (err) => {
+        this.savingAlert.set(false);
+        this.toast.show(err.error?.error || 'Erreur.', 'error');
+      },
+    });
+  }
+
+  async confirmDeleteAlert(item: AlertItem) {
+    const ok = await this.toast.confirm({
+      title: this.fr ? 'Supprimer cette alerte ?' : 'Delete this alert?',
+      text:  this.fr ? 'Elle disparaîtra du dashboard (les emails déjà envoyés ne sont pas rappelés).' : 'It will be removed from the dashboard (already-sent emails cannot be recalled).',
+      danger: true,
+      confirmText: this.fr ? 'Supprimer' : 'Delete',
+    });
+    if (!ok) return;
+    this.alerts.remove(item.id).subscribe({
+      next: () => {
+        this.alerts.load(this.optionKind());
+        this.toast.show(this.fr ? 'Alerte supprimée.' : 'Alert deleted.', 'success');
+      },
+      error: (err) => this.toast.show(err.error?.error || 'Erreur.', 'error'),
+    });
+  }
+
+  // ── Éditeur récap quotidien / bulletin hebdo (Option, admin) ─────────────
+  // Un seul éditeur, piloté par recapEditKind : 'daily' (récap) ou 'weekly' (bulletin).
+  showRecapEditor = signal(false);
+  recapEditKind   = signal<'daily' | 'weekly'>('daily');
+  editingRecapId  = signal<number | null>(null);
+  savingRecap     = signal(false);
+  recapDateDisplay = '';   // récap : date ; bulletin : non utilisé (period_from/to à la place)
+  periodFromDisplay = '';  // bulletin : début de période
+  periodToDisplay   = '';  // bulletin : fin de période
+  recapForm = this.emptyRecapForm();
+
+  // Rubriques suggérées (le champ reste libre : on peut saisir « Économie / Mines », etc.).
+  readonly recapRubriqueSuggestions = ['Politique', 'Économie', 'Social', 'International', 'Diplomatie', 'Mines', 'Environnement'];
+
+  private emptyFact() { return { date: '', text: '', sources: '', url: '' }; }
+
+  private emptyRecapForm() {
+    return {
+      published_at: '',
+      rubriques: [{ name: '', facts: [this.emptyFact()] }],
+      follow_up: '',                                   // récap quotidien
+      period_from: '', period_to: '', summary: '', trends: '', signals: '', // bulletin hebdo
+    };
+  }
+
+  // Parse jj/mm/aaaa → ISO ; renvoie null si invalide (et affiche une erreur), '' si vide.
+  private parseDmy(display: string): string | null {
+    const s = display.trim();
+    if (!s) return '';
+    const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    const d = m ? +m[1] : 0, mo = m ? +m[2] : 0, y = m ? +m[3] : 0;
+    if (!m || mo < 1 || mo > 12 || d < 1 || d > 31) {
+      this.toast.show(this.fr ? 'Date invalide — format jj/mm/aaaa.' : 'Invalid date — dd/mm/yyyy.', 'error');
+      return null;
+    }
+    return `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  }
+
+  parseRecapDate() {
+    const iso = this.parseDmy(this.recapDateDisplay);
+    if (iso === null) { this.recapDateDisplay = this.isoToDisplay(this.recapForm.published_at); return; }
+    this.recapForm.published_at = iso;
+    this.recapDateDisplay = this.isoToDisplay(iso);
+  }
+  setRecapDateFromPicker(iso: string) {
+    this.recapForm.published_at = iso || '';
+    this.recapDateDisplay = this.isoToDisplay(this.recapForm.published_at);
+  }
+
+  parsePeriodFrom() {
+    const iso = this.parseDmy(this.periodFromDisplay);
+    if (iso === null) { this.periodFromDisplay = this.isoToDisplay(this.recapForm.period_from); return; }
+    this.recapForm.period_from = iso;
+    this.periodFromDisplay = this.isoToDisplay(iso);
+  }
+  setPeriodFromPicker(iso: string) {
+    this.recapForm.period_from = iso || '';
+    this.periodFromDisplay = this.isoToDisplay(this.recapForm.period_from);
+  }
+  parsePeriodTo() {
+    const iso = this.parseDmy(this.periodToDisplay);
+    if (iso === null) { this.periodToDisplay = this.isoToDisplay(this.recapForm.period_to); return; }
+    this.recapForm.period_to = iso;
+    this.periodToDisplay = this.isoToDisplay(iso);
+  }
+  setPeriodToPicker(iso: string) {
+    this.recapForm.period_to = iso || '';
+    this.periodToDisplay = this.isoToDisplay(this.recapForm.period_to);
+  }
+
+  // Faits totaux saisis dans le formulaire (compteur d'en-tête « N faits relevés »).
+  get recapFormFactCount(): number {
+    return this.recapForm.rubriques.reduce((n, r) => n + r.facts.filter(f => f.text.trim()).length, 0);
+  }
+
+  addRubrique() { this.recapForm.rubriques.push({ name: '', facts: [this.emptyFact()] }); }
+  removeRubrique(ri: number) {
+    this.recapForm.rubriques.splice(ri, 1);
+    if (!this.recapForm.rubriques.length) this.addRubrique();
+  }
+  addFact(ri: number) {
+    if (this.recapForm.rubriques[ri].facts.length < 6) this.recapForm.rubriques[ri].facts.push(this.emptyFact());
+  }
+  removeFact(ri: number, fi: number) {
+    this.recapForm.rubriques[ri].facts.splice(fi, 1);
+    if (!this.recapForm.rubriques[ri].facts.length) this.addFact(ri);
+  }
+
+  // ── Mise en forme d'un fait (gras / italique / surligner) ────────────────
+  // Encadre la sélection avec des marqueurs ; rendus en <strong>/<em>/<mark> à l'affichage.
+  private readonly fmtMarkers: Record<'bold' | 'italic' | 'mark', string> = { bold: '**', italic: '*', mark: '==' };
+
+  wrapText(ta: HTMLTextAreaElement, fact: { text: string }, kind: 'bold' | 'italic' | 'mark') {
+    const m = this.fmtMarkers[kind];
+    const value = fact.text ?? '';
+    const start = ta.selectionStart ?? value.length;
+    const end   = ta.selectionEnd ?? value.length;
+    const selected = value.slice(start, end) || (this.fr ? 'texte' : 'text');
+    fact.text = value.slice(0, start) + m + selected + m + value.slice(end);
+    // Replace le curseur après la mise à jour du DOM (sélection sur le texte encadré).
+    setTimeout(() => {
+      ta.focus();
+      ta.selectionStart = start + m.length;
+      ta.selectionEnd   = start + m.length + selected.length;
+    });
+  }
+
+  /** Convertit les marqueurs (**gras**, *italique*, ==surligné==) en HTML (sanitizé par Angular à l'affichage). */
+  formatRecapText(text?: string | null): string {
+    if (!text) return '';
+    return text
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+      .replace(/==([^=]+)==/g, '<mark>$1</mark>');
+  }
+
+  openNewRecap() {
+    this.editingRecapId.set(null);
+    this.recapEditKind.set('daily');
+    this.recapForm = this.emptyRecapForm();
+    this.recapForm.published_at = this.todayIso();
+    this.recapDateDisplay = this.isoToDisplay(this.recapForm.published_at);
+    this.showRecapEditor.set(true);
+  }
+
+  openNewBulletin() {
+    this.editingRecapId.set(null);
+    this.recapEditKind.set('weekly');
+    this.recapForm = this.emptyRecapForm();
+    this.recapForm.published_at = this.todayIso();
+    this.periodFromDisplay = '';
+    this.periodToDisplay = '';
+    this.showRecapEditor.set(true);
+  }
+
+  openEditRecap(item: AlertItem) {
+    this.editingRecapId.set(item.id);
+    this.recapEditKind.set(item.kind === 'weekly' ? 'weekly' : 'daily');
+    const rubriques = (item.payload?.rubriques || []).map(r => ({
+      name: r.name ?? '',
+      facts: (r.facts?.length ? r.facts : [this.emptyFact()]).map(f => ({
+        date: f.date ?? '', text: f.text ?? '', sources: f.sources ?? '', url: f.url ?? '',
+      })),
+    }));
+    this.recapForm = {
+      published_at: item.published_at ? item.published_at.slice(0, 10) : '',
+      rubriques: rubriques.length ? rubriques : [{ name: '', facts: [this.emptyFact()] }],
+      follow_up: item.payload?.follow_up ?? '',
+      period_from: item.payload?.period_from ?? '',
+      period_to: item.payload?.period_to ?? '',
+      summary: item.payload?.summary ?? '',
+      trends: item.payload?.trends ?? '',
+      signals: item.payload?.signals ?? '',
+    };
+    this.recapDateDisplay  = this.isoToDisplay(this.recapForm.published_at);
+    this.periodFromDisplay = this.isoToDisplay(this.recapForm.period_from);
+    this.periodToDisplay   = this.isoToDisplay(this.recapForm.period_to);
+    this.showRecapEditor.set(true);
+  }
+
+  closeRecapEditor() { this.showRecapEditor.set(false); }
+
+  saveRecap() {
+    if (this.savingRecap()) return;
+    const weekly = this.recapEditKind() === 'weekly';
+    const rubriques = this.recapForm.rubriques
+      .map(r => ({
+        name: r.name.trim(),
+        facts: r.facts
+          .filter(f => f.text.trim())
+          .map(f => ({ date: f.date.trim(), text: f.text.trim(), sources: f.sources.trim(), url: f.url.trim() })),
+      }))
+      .filter(r => r.name || r.facts.length);
+    if (!rubriques.some(r => r.facts.length)) {
+      this.toast.show(this.fr ? 'Ajoutez au moins une rubrique contenant un fait.' : 'Add at least one section with a fact.', 'error');
+      return;
+    }
+    this.savingRecap.set(true);
+    const payload: RecapPayload = weekly
+      ? {
+          rubriques,
+          period_from: this.recapForm.period_from || undefined,
+          period_to: this.recapForm.period_to || undefined,
+          summary: this.recapForm.summary.trim(),
+          trends: this.recapForm.trends.trim(),
+          signals: this.recapForm.signals.trim(),
+        }
+      : { rubriques, follow_up: this.recapForm.follow_up.trim() };
+    const body: Partial<AlertItem> = {
+      kind: weekly ? 'weekly' : 'daily',
+      payload,
+      published_at: this.recapForm.published_at || undefined,
+    };
+    const id = this.editingRecapId();
+    const req = id ? this.alerts.update(id, body) : this.alerts.create(body);
+    req.subscribe({
+      next: () => {
+        this.savingRecap.set(false);
+        this.showRecapEditor.set(false);
+        this.alerts.load(weekly ? 'weekly' : 'daily');
+        const noun = weekly ? 'Bulletin' : (this.fr ? 'Récapitulatif' : 'Recap');
+        if (id) this.toast.show(this.fr ? `${noun} enregistré.` : `${noun} saved.`, 'success');
+        else    this.toast.show(this.fr ? `${noun} publié.` : `${noun} published.`, 'success');
+      },
+      error: (err) => {
+        this.savingRecap.set(false);
+        this.toast.show(err.error?.error || 'Erreur.', 'error');
+      },
+    });
+  }
+
   close() {
     this.closing.set(true);
     setTimeout(() => { this.closing.set(false); this.veille.close(); }, 280);
@@ -961,8 +1277,11 @@ export class DashboardComponent implements OnDestroy {
 
   @HostListener('document:keydown.escape')
   onEsc() {
-    if (this.lightboxImage()) { this.lightboxImage.set(null); return; }
-    if (this.showEditor())    { this.showEditor.set(false); return; }
+    if (this.lightboxImage())   { this.lightboxImage.set(null); return; }
+    if (this.selectedAlert())   { this.selectedAlert.set(null); return; }
+    if (this.showRecapEditor()) { this.showRecapEditor.set(false); return; }
+    if (this.showAlertEditor()) { this.showAlertEditor.set(false); return; }
+    if (this.showEditor())      { this.showEditor.set(false); return; }
     if (this.selectedItem())  { this.selectedItem.set(null); return; }
     this.close();
   }

@@ -142,7 +142,7 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'sub.sectorielle.desc':   'Suivi d\'un secteur d\'activité : économie, environnement, agriculture, tourisme, BTP, etc.',
     'sub.dediee.name':      'Veille Dédiée',
     'sub.dediee.short':     'Dédiée',
-    'sub.dediee.desc':      'Monitoring ultra-ciblé : mines, mangroves, télécoms, biodiversité. Profil thématique personnalisé.',
+    'sub.dediee.desc':      'Monitoring ultra-ciblé : mines, mangroves, télécoms. Profil thématique personnalisé.',
   },
 
 // ------------------------------------ ENG FORM ------------------------------------ //
@@ -288,6 +288,6 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'sub.sectorielle.desc':   'Monitoring of a specific sector: economy, environment, agriculture, tourism, construction, etc.',
     'sub.dediee.name':      'Dedicated Watch',
     'sub.dediee.short':     'Dedicated',
-    'sub.dediee.desc':      'Ultra-targeted monitoring: mining, mangroves, telecoms, biodiversity. Custom thematic profile.',
+    'sub.dediee.desc':      'Ultra-targeted monitoring: mining, mangroves, telecoms. Custom thematic profile.',
   },
 };
