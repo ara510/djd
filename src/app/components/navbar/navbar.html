@@ -6,7 +6,7 @@
       <img src="DJD.png" alt="Dujardin Delacour" class="navbar__logo-img" />
     </a>
 
-    <!-- Desktop nav -->
+    <!-- Desktop nav — liens vraiment centrés -->
     <nav class="navbar__links" aria-label="Navigation principale">
       <button
         *ngFor="let link of links"
@@ -16,11 +16,10 @@
         type="button">
         {{ lang.t(link.key) }}
       </button>
+    </nav>
 
-      <!-- Séparateur -->
-      <span class="navbar__sep" aria-hidden="true"></span>
-
-      <!-- Bouton galerie -->
+    <!-- Actions (à droite) -->
+    <div class="navbar__actions">
       <button class="navbar__gallery-btn" (click)="gallery.open()" type="button" aria-label="Ouvrir la galerie">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
              stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -46,40 +45,7 @@
           (click)="lang.lang.set('en')"
           type="button">EN</button>
       </div>
-
-      <span class="navbar__sep" aria-hidden="true"></span>
-
-      <!-- Bouton Veille (connecté) -->
-      @if (auth.currentUser()) {
-        <button class="navbar__gallery-btn navbar__veille-btn" (click)="veille.open()" type="button" [attr.aria-label]="auth.currentUser()!.is_admin ? 'Dashboard' : (lang.lang() === 'fr' ? 'Ouvrir la veille' : 'Open watch')">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
-          </svg>
-          <span>{{ auth.currentUser()!.is_admin ? 'Dashboard' : (lang.lang() === 'fr' ? 'Veille' : 'Watch') }}</span>
-        </button>
-        <span class="navbar__sep" aria-hidden="true"></span>
-      }
-
-      <!-- Bouton profil -->
-      @if (auth.currentUser()) {
-        <button class="navbar__profile-btn navbar__profile-btn--logged" [class.navbar__profile-btn--has-avatar]="!!auth.currentUser()!.avatar" (click)="openProfile.emit()" type="button" [attr.aria-label]="auth.currentUser()!.username">
-          @if (auth.currentUser()!.avatar) {
-            <img [src]="auth.currentUser()!.avatar!" class="navbar__profile-avatar" [alt]="auth.currentUser()!.username" />
-          } @else {
-            <span class="navbar__profile-initials">
-              {{ auth.currentUser()!.nom[0] }}{{ auth.currentUser()!.prenoms[0] }}
-            </span>
-          }
-        </button>
-      } @else {
-        <button class="navbar__profile-btn" (click)="openAuth.emit()" type="button" aria-label="Connexion">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-            <circle cx="12" cy="7" r="4"/>
-          </svg>
-        </button>
-      }
-    </nav>
+    </div>
 
     <!-- Mobile burger -->
     <button class="navbar__burger" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()" aria-label="Menu">
@@ -102,28 +68,6 @@
         </svg>
         {{ lang.lang() === 'fr' ? 'Photos' : 'Gallery' }}
       </button>
-
-      @if (auth.currentUser()) {
-        <button class="navbar__drawer-action" (click)="veille.open(); menuOpen.set(false)" type="button">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
-          </svg>
-          {{ auth.currentUser()!.is_admin ? 'Dashboard' : (lang.lang() === 'fr' ? 'Veille' : 'Watch') }}
-        </button>
-        <button class="navbar__drawer-action navbar__drawer-action--accent" (click)="openProfile.emit(); menuOpen.set(false)" type="button">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-          </svg>
-          @{{ auth.currentUser()!.username }}
-        </button>
-      } @else {
-        <button class="navbar__drawer-action navbar__drawer-action--accent" (click)="openAuth.emit(); menuOpen.set(false)" type="button">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-          </svg>
-          {{ lang.lang() === 'fr' ? 'Connexion' : 'Sign in' }}
-        </button>
-      }
 
       <div class="navbar__drawer-lang">
         <button class="navbar__lang-btn" [class.active]="lang.lang() === 'fr'" (click)="lang.lang.set('fr')" type="button">FR</button>
